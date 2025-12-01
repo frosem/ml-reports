@@ -1,24 +1,28 @@
-import { defineConfig } from 'cypress';
-import { allureCypress } from '@shelex/cypress-allure-plugin';
+import { defineConfig } from "cypress";
+import allureWriter from "@shelex/cypress-allure-plugin/writer";
+import { allureCypress } from "allure-cypress/reporter";
 
 export default defineConfig({
   e2e: {
-    baseUrl: 'https://www.saucedemo.com',
-    specPattern: 'cypress/e2e/**/*.cy.{js,ts}',
-    supportFile: 'cypress/support/e2e.ts',
+    specPattern: 'cypress/e2e/**/*.specs.cy.ts',
     setupNodeEvents(on, config) {
-      allureCypress(on, config);
+      allureWriter(on, config);
+      allureCypress(on, {
+        resultsDir: "allure-results"
+      });
       return config;
     },
-    env: {
-      allureReuseAfterSpec: true,
-    },
-    video: false,
-    screenshotOnRunFailure: true,
-    viewportWidth: 1280,
-    viewportHeight: 720,
-    defaultCommandTimeout: 10000,
-    requestTimeout: 10000,
-    responseTimeout: 10000,
   },
+  video: true,
+  viewportHeight: 720,
+  viewportWidth: 1280,
+  responseTimeout: 35000,
+  chromeWebSecurity: false,
+  screenshotOnRunFailure: true,
+  defaultCommandTimeout: 35000,
+  experimentalMemoryManagement: true,
+  env: {
+    allureReuseAfterSpec: true,
+    grepFilterSpecs: true
+  }
 });

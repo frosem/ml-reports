@@ -1,20 +1,22 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "lib": ["ES2020", "DOM"],
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "allowJs": true,
+    "baseUrl": ".",
+    "target": "ES6",
+    "module": "CommonJS",
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "skipLibCheck": true,
+    "moduleResolution": "Node",
     "resolveJsonModule": true,
-    "types": ["cypress", "node"]
+    "allowSyntheticDefaultImports": true,
+    "lib": ["ES5", "ES6", "DOM"],
+    "skipLibCheck": true,
+    "paths": {
+        "allure-cypress/reporter": ["./node_modules/allure-cypress/dist/reporter"]
+    },
+    "typeRoots": ["./node_modules/@types", "./typings"],
+    "types": ["cypress", "node"],
+    "noEmit": true
   },
-  "include": [
-    "cypress/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules"]
 }

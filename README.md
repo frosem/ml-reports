@@ -10,7 +10,7 @@ This project provides automation testing examples for [SauceDemo](https://www.sa
 
 Ensure you have the following installed on your system:
 
-- **Node.js** (version 18 or higher recommended)
+- **Node.js** (version 14 or higher recommended)
 - **npm** (comes with Node.js)
 
 ### Installation
@@ -33,56 +33,46 @@ Ensure you have the following installed on your system:
 
 ## Running Tests
 
-### Interactive Mode
+### Run Tests with Allure Reporting
 
-Open Cypress Test Runner in interactive mode to run tests with a visual interface:
-
-```bash
-npm run cy:open
-```
-
-This will open the Cypress UI where you can select and run individual tests with live reloading.
-
-### Headless Mode
-
-Run all tests in headless mode (useful for CI/CD):
+Run all SauceDemo tests with Allure reporting enabled:
 
 ```bash
-npm run cy:run
+npm run test:allure
 ```
 
-or
+This command runs tests in Chrome browser with Allure report generation.
+
+### Run Tests in Browser (Headed Mode)
+
+To watch tests execute in the browser:
 
 ```bash
-npm test
+npm run browser:chrome
 ```
 
-## Generating Test Reports
+This opens Chrome in headed mode, allowing you to see tests run in real-time.
 
-This project uses Allure for generating detailed test execution reports.
+## Viewing Test Reports
 
-### Generate Allure Report
+### Generate and View Allure Report
 
-After running tests in headless mode, generate the Allure report:
+After running tests, generate and automatically open the Allure report:
 
 ```bash
 npm run allure:report
 ```
 
-### View Allure Report
+This command will:
+- Generate the Allure report from test results
+- Automatically open the report in your default browser
 
-Open the generated report in your browser:
-
-```bash
-npm run allure:open
-```
-
-The report will display:
-- Test execution summary
-- Detailed test results with steps
-- Screenshots and attachments
-- Historical trends
-- Failed test details
+The report displays:
+- Test execution summary with pass/fail statistics
+- Detailed test results with steps and timings
+- Screenshots and error details for failed tests
+- Test history and trends
+- Categorized failures
 
 ## Application Context
 
@@ -94,7 +84,7 @@ The report will display:
 - Checkout workflow
 - Order completion
 
-This project demonstrates end-to-end testing patterns for these features using modern automation practices.
+This project demonstrates end-to-end testing patterns for these features using Page Object Model and Application Actions patterns.
 
 ## Technologies Used
 
@@ -102,18 +92,22 @@ This project demonstrates end-to-end testing patterns for these features using m
 - **TypeScript** - Adds type safety and better IDE support
 - **Allure** - Beautiful and informative test reports
 - **@shelex/cypress-allure-plugin** - Integration between Cypress and Allure
+- **allure-cypress** - Allure reporter for Cypress
 
 ## Project Structure
 
 ```
 ml-cypress-testing/
 ├── cypress/
-│   ├── e2e/          # Test specifications
-│   ├── fixtures/     # Test data files
-│   └── support/      # Custom commands and utilities
-├── cypress.config.ts # Cypress configuration
-├── tsconfig.json     # TypeScript configuration
-└── package.json      # Dependencies and scripts
+│   ├── e2e/
+│   │   └── saucedemo/     # SauceDemo test specifications
+│   ├── fixtures/          # Test data (users, products, URLs)
+│   ├── page-actions/      # Application actions layer
+│   ├── page-objects/      # Page element locators
+│   └── support/           # Custom commands and configuration
+├── cypress.config.ts      # Cypress configuration
+├── tsconfig.json          # TypeScript configuration
+└── package.json           # Dependencies and scripts
 ```
 
 ## Resources
