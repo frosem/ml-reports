@@ -4,7 +4,7 @@
 declare global {
   namespace Cypress {
     interface Chainable {
-      // Add custom command type definitions here
+      // Example: login(username: string, password: string): Chainable<void>
     }
   }
 }
