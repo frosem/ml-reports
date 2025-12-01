@@ -9,7 +9,10 @@
     "allure:open": "allure open allure-report",
     "test": "cypress run"
   },
-  "dependencies": {
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
     "@shelex/cypress-allure-plugin": "^2.40.2",
     "allure-commandline": "^2.25.0",
     "cypress": "^13.6.2",
