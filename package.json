@@ -1,0 +1,18 @@
+{
+  "name": "ml-cypress",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:allure": "cypress run --browser chrome --spec \"cypress/e2e/saucedemo/**/*.specs.cy.ts\" --env allure=true",
+    "browser:chrome": "npx cypress run --browser=chrome --headed --spec \"cypress/e2e/saucedemo/**/*.specs.cy.ts\" --reporter mocha-allure-reporter",
+    "allure:report": "allure generate allure-results --clean -o allure-report && allure open allure-report"
+  },
+  "devDependencies": {
+    "@cypress/puppeteer": "^0.1.8",
+    "@shelex/cypress-allure-plugin": "^2.41.2",
+    "allure-commandline": "^2.34.1",
+    "allure-cypress": "^2.14.0",
+    "cypress": "^14.5.4",
+    "mocha-allure-reporter": "^1.4.0",
+    "typescript": "^5.9.3"
+  }
+}

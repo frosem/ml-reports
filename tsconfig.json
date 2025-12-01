@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "baseUrl": ".",
+    "target": "ES6",
+    "module": "CommonJS",
+    "esModuleInterop": true,
+    "moduleResolution": "Node",
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "lib": ["ES5", "ES6", "DOM"],
+    "skipLibCheck": true,
+    "paths": {
+        "allure-cypress/reporter": ["./node_modules/allure-cypress/dist/reporter"]
+    },
+    "typeRoots": ["./node_modules/@types", "./typings"],
+    "types": ["cypress", "node"],
+    "noEmit": true
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules"]
+}

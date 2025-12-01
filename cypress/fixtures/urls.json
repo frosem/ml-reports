@@ -1,0 +1,8 @@
+{
+  "baseUrl": "https://www.saucedemo.com",
+  "paths": {
+    "login": "/",
+    "inventory": "/inventory.html",
+    "cart": "/cart.html"
+  }
+}
