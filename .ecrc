@@ -1,0 +1,15 @@
+{
+  "Exclude": [
+    ".*\\.md$",
+    "LICENSE",
+    "README",
+    "allure-report",
+    "allure-results",
+    "cypress/screenshots",
+    "cypress/videos",
+    "node_modules",
+    "package-lock\\.json"
+  ],
+  "SpacesAfterTabs": false,
+  "Verbose": false
+}
