@@ -20,6 +20,8 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
+      # Cache dependencies to speed up workflow and reduce npm registry calls
+      # Caches both node_modules and Cypress binary based on package-lock.json hash
       - name: node_modules and Cypress cache
         id: node-modules-cache
         uses: actions/cache@v4
@@ -47,6 +49,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
+      # Restore cached dependencies from the build job
       - name: node_modules and Cypress cache
         uses: actions/cache@v4
         with:
@@ -55,6 +58,8 @@ jobs:
             ~/.cache/Cypress
           key: ${{ runner.os }}-node-cypress-${{ hashFiles('package-lock.json') }}
 
+      # Validate TypeScript code for type errors without emitting output files
+      # This catches type-related issues early in the PR process
       - name: Type check
         run: npx tsc --noEmit
 
@@ -72,6 +77,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
 
+      # Restore cached dependencies from the build job
       - name: node_modules and Cypress cache
         uses: actions/cache@v4
         with:
@@ -80,9 +86,13 @@ jobs:
             ~/.cache/Cypress
           key: ${{ runner.os }}-node-cypress-${{ hashFiles('package-lock.json') }}
 
+      # Ensure Cypress binary is installed in the cache directory
+      # This is necessary because Cypress requires a separate binary installation
       - name: Ensure Cypress binary exists
         run: npx cypress install
 
+      # Verify that Cypress is properly installed and can run
+      # This catches configuration or installation issues before running actual tests
       - name: Verify Cypress
         run: npx cypress verify
 
@@ -92,6 +102,8 @@ jobs:
     needs: [cypress-verify, type-check]
     if: always()
     steps:
+      # Generate a summary of all validation checks for easy PR review
+      # This appears on the GitHub Actions summary page
       - name: Generate Summary
         run: |
           echo "## PR Validation Summary" >> $GITHUB_STEP_SUMMARY
