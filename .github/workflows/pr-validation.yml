@@ -107,4 +107,4 @@ jobs:
             echo "❌ Cypress configuration invalid" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "4a1 Run the full test suite manually via **Actions  Cypress Tests  Run workflow**" >> $GITHUB_STEP_SUMMARY
+          echo "💡 Run the full test suite manually via **Actions → Cypress Tests → Run workflow**" >> $GITHUB_STEP_SUMMARY

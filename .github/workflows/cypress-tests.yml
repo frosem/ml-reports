@@ -3,8 +3,6 @@ name: Cypress Tests with Allure Reports & Jira Integration
 on:
   push:
     branches: [main, master]
-  pull_request:
-    branches: [main, master]
   workflow_dispatch: # Allows manual triggering
 
 # Required permissions for deploying to GitHub Pages
