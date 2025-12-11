@@ -75,7 +75,16 @@ jobs:
       - name: Get indent size from .editorconfig
         id: get-indent-size
         run: |
-          INDENT_SIZE=$(grep -m1 "^indent_size" .editorconfig | cut -d'=' -f2 | tr -d ' ')
+          set -e
+          if [ ! -f .editorconfig ]; then
+            echo "Error: .editorconfig file not found"
+            exit 1
+          fi
+          INDENT_SIZE=$(grep -E '^\s*indent_size\s*=' .editorconfig | head -n1 | cut -d'=' -f2 | tr -d ' ')
+          if [ -z "$INDENT_SIZE" ]; then
+            echo "Error: indent_size not found in .editorconfig"
+            exit 1
+          fi
           echo "indent_size=$INDENT_SIZE" >> $GITHUB_OUTPUT
           echo "Detected indent size: $INDENT_SIZE spaces"
 
