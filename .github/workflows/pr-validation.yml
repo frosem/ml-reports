@@ -58,10 +58,30 @@ jobs:
             ~/.cache/Cypress
           key: ${{ runner.os }}-node-cypress-${{ hashFiles('package-lock.json') }}
 
+      # Install dependencies if cache miss (fallback)
+      - name: Install dependencies (if cache miss)
+        run: npm ci --prefer-offline --no-audit
+
       # Validate TypeScript code for type errors without emitting output files
       # This catches type-related issues early in the PR process
       - name: Type check
-        run: npx tsc --noEmit
+        run: ./node_modules/.bin/tsc --noEmit
+
+  indentation-check:
+    name: Check Indentation (2 spaces)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install editorconfig-checker
+        run: |
+          curl -O -L -C - https://github.com/editorconfig-checker/editorconfig-checker/releases/download/v3.0.3/ec-linux-amd64.tar.gz
+          tar xzf ec-linux-amd64.tar.gz
+          chmod +x bin/ec-linux-amd64
+
+      - name: Check indentation and formatting
+        run: ./bin/ec-linux-amd64
 
   cypress-verify:
     name: Validate Cypress Config
@@ -86,20 +106,24 @@ jobs:
             ~/.cache/Cypress
           key: ${{ runner.os }}-node-cypress-${{ hashFiles('package-lock.json') }}
 
+      # Install dependencies if cache miss (fallback)
+      - name: Install dependencies (if cache miss)
+        run: npm ci --prefer-offline --no-audit
+
       # Ensure Cypress binary is installed in the cache directory
       # This is necessary because Cypress requires a separate binary installation
       - name: Ensure Cypress binary exists
-        run: npx cypress install
+        run: ./node_modules/.bin/cypress install
 
       # Verify that Cypress is properly installed and can run
       # This catches configuration or installation issues before running actual tests
       - name: Verify Cypress
-        run: npx cypress verify
+        run: ./node_modules/.bin/cypress verify
 
   pr-summary:
     name: PR Summary
     runs-on: ubuntu-latest
-    needs: [cypress-verify, type-check]
+    needs: [cypress-verify, indentation-check, type-check]
     if: always()
     steps:
       # Generate a summary of all validation checks for easy PR review
@@ -108,6 +132,11 @@ jobs:
         run: |
           echo "## PR Validation Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.indentation-check.result }}" == "success" ]; then
+            echo "✅ Indentation check passed (2 spaces)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Indentation check failed" >> $GITHUB_STEP_SUMMARY
+          fi
           if [ "${{ needs.type-check.result }}" == "success" ]; then
             echo "✅ TypeScript type check passed" >> $GITHUB_STEP_SUMMARY
           else
