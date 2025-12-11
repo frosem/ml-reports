@@ -81,16 +81,7 @@ jobs:
           chmod +x bin/ec-linux-amd64
 
       - name: Check indentation and formatting
-        run: |
-          ./bin/ec-linux-amd64 \
-            --exclude ".*\.md$" \
-            --exclude "README" \
-            --exclude "node_modules" \
-            --exclude "package-lock.json" \
-            --exclude "allure-results" \
-            --exclude "allure-report" \
-            --exclude "cypress/videos" \
-            --exclude "cypress/screenshots"
+        run: ./bin/ec-linux-amd64
 
   cypress-verify:
     name: Validate Cypress Config
