@@ -21,8 +21,8 @@ jobs:
             echo "Error: package.json file not found"
             exit 1
           fi
-          NODE_VERSION=$(node -p "require('./package.json').engines.node")
-          if [ -z "$NODE_VERSION" ]; then
+          NODE_VERSION=$(jq -r '.engines.node' package.json)
+          if [ -z "$NODE_VERSION" ] || [ "$NODE_VERSION" = "null" ]; then
             echo "Error: engines.node not found in package.json"
             exit 1
           fi
