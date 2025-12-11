@@ -1,0 +1,101 @@
+name: PR Validation
+
+on:
+  pull_request:
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  node-build:
+    name: Build & Cache Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: node_modules cache
+        id: node-modules-cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules/
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+  type-check:
+    name: TypeScript Type Check
+    runs-on: ubuntu-latest
+    needs: [node-build]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: node_modules cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules/
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+  cypress-verify:
+    name: Validate Cypress Config
+    runs-on: ubuntu-latest
+    needs: [node-build]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: node_modules cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules/
+          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+
+      - name: Verify Cypress
+        run: npx cypress verify
+
+  pr-summary:
+    name: PR Summary
+    runs-on: ubuntu-latest
+    needs: [cypress-verify, type-check]
+    if: always()
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "## PR Validation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.type-check.result }}" == "success" ]; then
+            echo "✅ TypeScript type check passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ TypeScript type check failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          if [ "${{ needs.cypress-verify.result }}" == "success" ]; then
+            echo "✅ Cypress configuration valid" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Cypress configuration invalid" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "💡 Run the full test suite manually via **Actions → Cypress Tests → Run workflow**" >> $GITHUB_STEP_SUMMARY
