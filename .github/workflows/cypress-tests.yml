@@ -1,11 +1,12 @@
 name: Cypress Tests with Allure Reports & Jira Integration
 
 on:
-  push:
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
-  workflow_dispatch: # Allows manual triggering
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to run tests on (leave empty for current branch)'
+        required: false
+        type: string
 
 # Required permissions for deploying to GitHub Pages
 permissions:
@@ -13,6 +14,8 @@ permissions:
 
 env:
   NODE_VERSION: '20'
+  # Sanitize branch name: replace / with - for valid directory names
+  BRANCH_NAME: ${{ github.event.inputs.branch || github.ref_name }}
 
 jobs:
   cypress-tests:
@@ -73,28 +76,33 @@ jobs:
           GITHUB_COMMIT_SHA: ${{ github.sha }}
         run: npx tsx scripts/create-jira-bugs.ts
 
+      # Sanitize branch name for use as directory (replace / with -)
+      - name: Sanitize branch name
+        id: sanitize
+        run: |
+          SANITIZED_BRANCH=$(echo "${{ env.BRANCH_NAME }}" | sed 's/\//-/g')
+          echo "branch=$SANITIZED_BRANCH" >> $GITHUB_OUTPUT
+
       # Deploy Allure report to GitHub Pages
-      # Note: For first-time deployment, ensure the gh-pages branch exists.
-      # If it doesn't exist, the peaceiris/actions-gh-pages action will create it automatically.
-      # Alternatively, you can manually create it with:
-      #   git checkout --orphan gh-pages
-      #   git rm -rf .
-      #   git commit --allow-empty -m "Initial gh-pages commit"
-      #   git push origin gh-pages
-      # This step uses the GITHUB_TOKEN for authentication, which is automatically provided by GitHub Actions.
+      # Each branch gets its own subdirectory under /allure-report/<branch-name>/
+      # This allows viewing reports from multiple branches without overwriting each other
       - name: Deploy Allure Report to GitHub Pages
-        if: always() && github.ref == 'refs/heads/main'
+        if: always()
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./allure-report
-          destination_dir: allure-report
+          destination_dir: allure-report/${{ steps.sanitize.outputs.branch }}
+          keep_files: true
 
       # Add test results summary to GitHub Actions summary page
       - name: Test Results Summary
         if: always()
         run: |
+          SANITIZED_BRANCH=$(echo "${{ env.BRANCH_NAME }}" | sed 's/\//-/g')
           echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ env.BRANCH_NAME }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ "${{ steps.cypress.outcome }}" == "success" ]; then
             echo "✅ All tests passed!" >> $GITHUB_STEP_SUMMARY
@@ -104,4 +112,6 @@ jobs:
             echo "📋 Jira bugs have been created for failed tests." >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "🔗 [View Allure Report](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/allure-report)" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 [View Allure Report for this branch](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/allure-report/${SANITIZED_BRANCH})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📂 [View all branch reports](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/allure-report/)" >> $GITHUB_STEP_SUMMARY
