@@ -57,7 +57,7 @@ export class LoginPageActions {
   static verifyErrorMessage(expectedMessage: string): void {
     cy.get(loginPageObjects.errorMessageContainer)
       .should('be.visible')
-      .and('contain.text', expectedMessage);
+      .and('have.text', expectedMessage);
   }
 
   /**
