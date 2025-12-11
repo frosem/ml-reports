@@ -3,13 +3,36 @@ name: PR Validation
 on:
   pull_request:
 
-env:
-  NODE_VERSION: '20'
-
 jobs:
+  setup:
+    name: Setup Configuration
+    runs-on: ubuntu-latest
+    outputs:
+      node-version: ${{ steps.get-node-version.outputs.node_version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get Node version from package.json
+        id: get-node-version
+        run: |
+          set -e
+          if [ ! -f package.json ]; then
+            echo "Error: package.json file not found"
+            exit 1
+          fi
+          NODE_VERSION=$(node -p "require('./package.json').engines.node")
+          if [ -z "$NODE_VERSION" ]; then
+            echo "Error: engines.node not found in package.json"
+            exit 1
+          fi
+          echo "node_version=$NODE_VERSION" >> $GITHUB_OUTPUT
+          echo "Detected Node version: $NODE_VERSION"
+
   node-build:
     name: Build & Cache Dependencies
     runs-on: ubuntu-latest
+    needs: [setup]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -17,7 +40,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: ${{ needs.setup.outputs.node-version }}
           cache: 'npm'
 
       # Cache dependencies to speed up workflow and reduce npm registry calls
@@ -38,7 +61,7 @@ jobs:
   type-check:
     name: TypeScript Type Check
     runs-on: ubuntu-latest
-    needs: [node-build]
+    needs: [setup, node-build]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -46,7 +69,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: ${{ needs.setup.outputs.node-version }}
           cache: 'npm'
 
       # Restore cached dependencies from the build job
@@ -66,22 +89,6 @@ jobs:
       # This catches type-related issues early in the PR process
       - name: Type check
         run: ./node_modules/.bin/tsc --noEmit
-
-  indentation-check:
-    name: Check Indentation (2 spaces)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install editorconfig-checker
-        run: |
-          curl -O -L -C - https://github.com/editorconfig-checker/editorconfig-checker/releases/download/v3.0.3/ec-linux-amd64.tar.gz
-          tar xzf ec-linux-amd64.tar.gz
-          chmod +x bin/ec-linux-amd64
-
-      - name: Check indentation and formatting
-        run: ./bin/ec-linux-amd64
 
   indentation-check:
     name: Check Indentation
@@ -127,7 +134,7 @@ jobs:
   cypress-verify:
     name: Validate Cypress Config
     runs-on: ubuntu-latest
-    needs: [node-build]
+    needs: [setup, node-build]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -135,7 +142,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: ${{ needs.setup.outputs.node-version }}
           cache: 'npm'
 
       # Restore cached dependencies from the build job
