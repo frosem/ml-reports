@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Example configuration for Jira integration. Copy to jira-config.json and fill in your values. For GitHub Actions, use repository secrets instead.",
+  
+  "jira": {
+    "baseUrl": "https://your-domain.atlassian.net",
+    "userEmail": "your-email@example.com",
+    "apiToken": "your-api-token-here",
+    "projectKey": "TEST",
+    "issueType": "Bug",
+    "priority": "High",
+    "labels": ["automated-test-failure", "cypress"]
+  },
+  
+  "allure": {
+    "resultsDir": "./allure-results"
+  },
+  
+  "options": {
+    "checkExistingIssues": true,
+    "addCommentsToExisting": true,
+    "dryRun": false
+  },
+  
+  "notes": {
+    "apiTokenGeneration": "Generate your API token at: https://id.atlassian.com/manage-profile/security/api-tokens",
+    "projectKey": "This is the prefix of your Jira issues (e.g., 'TEST' for TEST-123)",
+    "issueTypes": "Common types: Bug, Task, Story, Epic, Sub-task",
+    "priorities": "Common priorities: Highest, High, Medium, Low, Lowest"
+  }
+}
+
