@@ -1,8 +1,6 @@
 name: Cypress Tests with Allure Reports & Jira Integration
 
 on:
-  push:
-    branches: [main, master]
   workflow_dispatch:
     inputs:
       branch:
