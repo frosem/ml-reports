@@ -7,13 +7,17 @@ on:
     branches: [main, master]
   workflow_dispatch: # Allows manual triggering
 
+# Required permissions for deploying to GitHub Pages
+permissions:
+  contents: write
+
 env:
   NODE_VERSION: '20'
 
 jobs:
   cypress-tests:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -27,15 +31,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Run Cypress tests and generate Allure results
       - name: Run Cypress tests with Allure
         id: cypress
         continue-on-error: true
         run: npm run test:allure
 
+      # Generate HTML Allure report from test results
       - name: Generate Allure Report
         if: always()
         run: npx allure generate allure-results --clean -o allure-report
 
+      # Upload Allure results as artifacts for debugging
       - name: Upload Allure Results
         if: always()
         uses: actions/upload-artifact@v4
@@ -44,6 +51,7 @@ jobs:
           path: allure-results/
           retention-days: 30
 
+      # Upload Allure report as artifacts for download
       - name: Upload Allure Report
         if: always()
         uses: actions/upload-artifact@v4
@@ -52,6 +60,7 @@ jobs:
           path: allure-report/
           retention-days: 30
 
+      # Create Jira bugs automatically for any test failures
       - name: Create Jira bugs for test failures
         if: failure() || steps.cypress.outcome == 'failure'
         env:
@@ -64,6 +73,15 @@ jobs:
           GITHUB_COMMIT_SHA: ${{ github.sha }}
         run: npx tsx scripts/create-jira-bugs.ts
 
+      # Deploy Allure report to GitHub Pages
+      # Note: For first-time deployment, ensure the gh-pages branch exists.
+      # If it doesn't exist, the peaceiris/actions-gh-pages action will create it automatically.
+      # Alternatively, you can manually create it with:
+      #   git checkout --orphan gh-pages
+      #   git rm -rf .
+      #   git commit --allow-empty -m "Initial gh-pages commit"
+      #   git push origin gh-pages
+      # This step uses the GITHUB_TOKEN for authentication, which is automatically provided by GitHub Actions.
       - name: Deploy Allure Report to GitHub Pages
         if: always() && github.ref == 'refs/heads/main'
         uses: peaceiris/actions-gh-pages@v3
@@ -72,6 +90,7 @@ jobs:
           publish_dir: ./allure-report
           destination_dir: allure-report
 
+      # Add test results summary to GitHub Actions summary page
       - name: Test Results Summary
         if: always()
         run: |
@@ -86,4 +105,3 @@ jobs:
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "🔗 [View Allure Report](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/allure-report)" >> $GITHUB_STEP_SUMMARY
-
