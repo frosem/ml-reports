@@ -64,11 +64,20 @@ jobs:
         run: npx tsc --noEmit
 
   indentation-check:
-    name: Check Indentation (2 spaces)
+    name: Check Indentation
     runs-on: ubuntu-latest
+    outputs:
+      indent-size: ${{ steps.get-indent-size.outputs.indent_size }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Get indent size from .editorconfig
+        id: get-indent-size
+        run: |
+          INDENT_SIZE=$(grep -m1 "^indent_size" .editorconfig | cut -d'=' -f2 | tr -d ' ')
+          echo "indent_size=$INDENT_SIZE" >> $GITHUB_OUTPUT
+          echo "Detected indent size: $INDENT_SIZE spaces"
 
       - name: Install editorconfig-checker
         run: |
@@ -129,10 +138,11 @@ jobs:
       # This appears on the GitHub Actions summary page
       - name: Generate Summary
         run: |
+          INDENT_SIZE="${{ needs.indentation-check.outputs.indent-size }}"
           echo "## PR Validation Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ "${{ needs.indentation-check.result }}" == "success" ]; then
-            echo "✅ Indentation check passed (2 spaces)" >> $GITHUB_STEP_SUMMARY
+            echo "✅ Indentation check passed ($INDENT_SIZE spaces)" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Indentation check failed" >> $GITHUB_STEP_SUMMARY
           fi
