@@ -1,18 +1,24 @@
 {
   "name": "ml-cypress",
   "scripts": {
+    "allure:clean": "rm -rf allure-results allure-report",
+    "allure:report": "allure generate allure-results --clean -o allure-report && allure open allure-report",
+    "browser:chrome": "npx cypress run --browser=chrome --headed --spec \"cypress/e2e/saucedemo/**/*.specs.cy.ts\" --reporter mocha-allure-reporter",
+    "jira:create-bugs": "npx tsx scripts/create-jira-bugs.ts",
+    "jira:dry-run": "DRY_RUN=true npx tsx scripts/create-jira-bugs.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "test:allure": "cypress run --browser chrome --spec \"cypress/e2e/saucedemo/**/*.specs.cy.ts\" --env allure=true",
-    "browser:chrome": "npx cypress run --browser=chrome --headed --spec \"cypress/e2e/saucedemo/**/*.specs.cy.ts\" --reporter mocha-allure-reporter",
-    "allure:report": "allure generate allure-results --clean -o allure-report && allure open allure-report"
+    "test:ci": "npm run allure:clean && npm run test:allure || true && npm run jira:create-bugs"
   },
   "devDependencies": {
     "@cypress/puppeteer": "^0.1.8",
     "@shelex/cypress-allure-plugin": "^2.41.2",
+    "@types/node": "^22.10.2",
     "allure-commandline": "^2.34.1",
     "allure-cypress": "^2.14.0",
     "cypress": "^14.5.4",
     "mocha-allure-reporter": "^1.4.0",
+    "tsx": "^4.19.2",
     "typescript": "^5.9.3"
   }
 }

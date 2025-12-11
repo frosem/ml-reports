@@ -14,7 +14,7 @@
         "allure-cypress/reporter": ["./node_modules/allure-cypress/dist/reporter"]
     },
     "typeRoots": ["./node_modules/@types", "./typings"],
-    "types": ["cypress", "node"],
+    "types": ["node"],
     "noEmit": true
   },
   "include": ["**/*.ts"],
