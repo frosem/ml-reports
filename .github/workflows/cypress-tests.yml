@@ -1,23 +1,14 @@
 name: Cypress Tests with Allure Reports & Jira Integration
 
 on:
-  push:
-    branches: [main, master]
   workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Branch to run tests on (leave empty for current branch)'
-        required: false
-        type: string
 
 # Required permissions for deploying to GitHub Pages
 permissions:
   contents: write
 
 env:
-  NODE_VERSION: '20'
-  # Sanitize branch name: replace / with - for valid directory names
-  BRANCH_NAME: ${{ github.event.inputs.branch || github.ref_name }}
+  BRANCH_NAME: ${{ github.ref_name }}
 
 jobs:
   setup:
