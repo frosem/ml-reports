@@ -1,7 +1,7 @@
 import { test } from '@playwright/test';
-import { CartPageActions } from '../../page-actions/CartPageActions';
-import { InventoryPageActions } from '../../page-actions/InventoryPageActions';
-import { LoginPageActions } from '../../page-actions/LoginPageActions';
+import { CartPageActions } from '@playwright-page-actions/CartPageActions';
+import { InventoryPageActions } from '@playwright-page-actions/InventoryPageActions';
+import { LoginPageActions } from '@playwright-page-actions/LoginPageActions';
 
 test.describe('SauceDemo - Complete Login and Add to Cart Flow', () => {
   test('should complete full flow: login -> add item -> verify in cart', async ({ page }) => {

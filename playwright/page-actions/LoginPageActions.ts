@@ -3,9 +3,9 @@
  * Application actions for the Login page using LoginPageObjects
  */
 import { type Page, expect } from '@playwright/test';
-import { loginPageObjects } from '../../page-objects/LoginPageObjects';
-import urls from '../../fixtures/urls.json';
-import users from '../../fixtures/users.json';
+import { loginPageObjects } from '@page-objects/LoginPageObjects';
+import urls from '@fixtures/urls.json';
+import users from '@fixtures/users.json';
 
 export class LoginPageActions {
   readonly page: Page;

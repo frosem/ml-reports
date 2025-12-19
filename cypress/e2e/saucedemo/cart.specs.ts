@@ -1,7 +1,7 @@
-import { CartPageActions } from '../../page-actions/CartPageActions';
-import { InventoryPageActions } from '../../page-actions/InventoryPageActions';
-import { LoginPageActions } from '../../page-actions/LoginPageActions';
-import products from '../../../fixtures/products.json';
+import { CartPageActions } from '@cypress-page-actions/CartPageActions';
+import { InventoryPageActions } from '@cypress-page-actions/InventoryPageActions';
+import { LoginPageActions } from '@cypress-page-actions/LoginPageActions';
+import products from '@fixtures/products.json';
 
 beforeEach(() => {
   LoginPageActions.visitLoginPage();

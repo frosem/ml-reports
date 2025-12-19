@@ -3,8 +3,8 @@
  * Application actions for the Inventory page using InventoryPageObjects
  */
 import { type Page, expect } from '@playwright/test';
-import { inventoryPageObjects } from '../../page-objects/InventoryPageObjects';
-import urls from '../../fixtures/urls.json';
+import { inventoryPageObjects } from '@page-objects/InventoryPageObjects';
+import urls from '@fixtures/urls.json';
 
 export class InventoryPageActions {
   readonly page: Page;

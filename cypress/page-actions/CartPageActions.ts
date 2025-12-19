@@ -2,8 +2,8 @@
  * Cart Page Actions
  * Application actions for the Cart page using CartPageObjects
  */
-import { cartPageObjects } from '../../page-objects/CartPageObjects';
-import urls from '../../fixtures/urls.json';
+import { cartPageObjects } from '@page-objects/CartPageObjects';
+import urls from '@fixtures/urls.json';
 
 export class CartPageActions {
   /**

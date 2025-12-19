@@ -1,8 +1,8 @@
 import { test } from '@playwright/test';
-import { CartPageActions } from '../../page-actions/CartPageActions';
-import { InventoryPageActions } from '../../page-actions/InventoryPageActions';
-import { LoginPageActions } from '../../page-actions/LoginPageActions';
-import products from '../../../fixtures/products.json';
+import { CartPageActions } from '@playwright-page-actions/CartPageActions';
+import { InventoryPageActions } from '@playwright-page-actions/InventoryPageActions';
+import { LoginPageActions } from '@playwright-page-actions/LoginPageActions';
+import products from '@fixtures/products.json';
 
 let cartPage: CartPageActions;
 let inventoryPage: InventoryPageActions;

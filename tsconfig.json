@@ -10,6 +10,10 @@
     "moduleResolution": "Node",
     "noEmit": true,
     "paths": {
+        "@fixtures/*": ["fixtures/*"],
+        "@cypress-page-actions/*": ["cypress/page-actions/*"],
+        "@page-objects/*": ["page-objects/*"],
+        "@playwright-page-actions/*": ["playwright/page-actions/*"],
         "allure-cypress/reporter": ["./node_modules/allure-cypress/dist/reporter"]
     },
     "resolveJsonModule": true,

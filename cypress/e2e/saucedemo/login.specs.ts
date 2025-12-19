@@ -1,7 +1,7 @@
-import { LoginPageActions } from '../../page-actions/LoginPageActions';
-import { InventoryPageActions } from '../../page-actions/InventoryPageActions';
-import users from '../../../fixtures/users.json';
-import errorMessages from '../../../fixtures/error-messages.json';
+import { InventoryPageActions } from '@cypress-page-actions/InventoryPageActions';
+import { LoginPageActions } from '@cypress-page-actions/LoginPageActions';
+import errorMessages from '@fixtures/error-messages.json';
+import users from '@fixtures/users.json';
 
 beforeEach(() => {
   LoginPageActions.visitLoginPage();

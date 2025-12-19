@@ -3,8 +3,8 @@
  * Application actions for the Cart page using CartPageObjects
  */
 import { type Page, expect } from '@playwright/test';
-import { cartPageObjects } from '../../page-objects/CartPageObjects';
-import urls from '../../fixtures/urls.json';
+import { cartPageObjects } from '@page-objects/CartPageObjects';
+import urls from '@fixtures/urls.json';
 
 export class CartPageActions {
   readonly page: Page;

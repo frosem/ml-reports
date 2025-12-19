@@ -2,9 +2,9 @@
  * Login Page Actions
  * Application actions for the Login page using LoginPageObjects
  */
-import { loginPageObjects } from '../../page-objects/LoginPageObjects';
-import urls from '../../fixtures/urls.json';
-import users from '../../fixtures/users.json';
+import { loginPageObjects } from '@page-objects/LoginPageObjects';
+import urls from '@fixtures/urls.json';
+import users from '@fixtures/users.json';
 
 export class LoginPageActions {
   /**

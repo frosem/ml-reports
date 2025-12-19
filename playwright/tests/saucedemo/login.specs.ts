@@ -1,8 +1,8 @@
 import { test } from '@playwright/test';
-import { InventoryPageActions } from '../../page-actions/InventoryPageActions';
-import { LoginPageActions } from '../../page-actions/LoginPageActions';
-import errorMessages from '../../../fixtures/error-messages.json';
-import users from '../../../fixtures/users.json';
+import { InventoryPageActions } from '@playwright-page-actions/InventoryPageActions';
+import { LoginPageActions } from '@playwright-page-actions/LoginPageActions';
+import errorMessages from '@fixtures/error-messages.json';
+import users from '@fixtures/users.json';
 
 let loginPage: LoginPageActions;
 

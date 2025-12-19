@@ -2,8 +2,8 @@
  * Inventory Page Actions
  * Application actions for the Inventory page using InventoryPageObjects
  */
-import { inventoryPageObjects } from '../../page-objects/InventoryPageObjects';
-import urls from '../../fixtures/urls.json';
+import { inventoryPageObjects } from '@page-objects/InventoryPageObjects';
+import urls from '@fixtures/urls.json';
 
 export class InventoryPageActions {
   /**
