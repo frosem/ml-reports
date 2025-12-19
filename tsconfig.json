@@ -4,18 +4,22 @@
     "allowSyntheticDefaultImports": true,
     "baseUrl": ".",
     "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": false,
     "lib": ["DOM", "ES5", "ES6"],
     "module": "CommonJS",
     "moduleResolution": "Node",
     "noEmit": true,
     "paths": {
+        "@fixtures/*": ["fixtures/*"],
+        "@cypress-page-actions/*": ["cypress/page-actions/*"],
+        "@page-objects/*": ["page-objects/*"],
+        "@playwright-page-actions/*": ["playwright/page-actions/*"],
         "allure-cypress/reporter": ["./node_modules/allure-cypress/dist/reporter"]
     },
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "target": "ES6",
-    "typeRoots": ["./node_modules/@types", "./typings"],
-    "types": ["node"]
+    "typeRoots": ["node"]
   },
   "exclude": ["node_modules"],
   "include": ["**/*.ts"]

@@ -2,9 +2,9 @@
  * Login Page Actions
  * Application actions for the Login page using LoginPageObjects
  */
-import { loginPageObjects } from '../page-objects/LoginPageObjects';
-import urls from '../fixtures/urls.json';
-import users from '../fixtures/users.json';
+import { loginPageObjects } from '@page-objects/LoginPageObjects';
+import urls from '@fixtures/urls.json';
+import users from '@fixtures/users.json';
 
 export class LoginPageActions {
   /**
@@ -18,23 +18,23 @@ export class LoginPageActions {
    * Enter username in the username field
    * @param username - The username to enter
    */
-  static enterUsername(username: string): void {
-    cy.get(loginPageObjects.usernameInput).type(username);
+  static enterUsernameInput(username: string): void {
+    cy.findByTestId(loginPageObjects.usernameInputTestId).type(username);
   }
 
   /**
    * Enter password in the password field
    * @param password - The password to enter
    */
-  static enterPassword(password: string): void {
-    cy.get(loginPageObjects.passwordInput).type(password);
+  static enterPasswordInput(password: string): void {
+    cy.findByTestId(loginPageObjects.passwordInputTestId).type(password);
   }
 
   /**
    * Click the login button
    */
   static clickLoginButton(): void {
-    cy.get(loginPageObjects.loginButton).click();
+    cy.findByTestId(loginPageObjects.loginButtonTestId).click();
   }
 
   /**
@@ -45,8 +45,8 @@ export class LoginPageActions {
   static login(username?: string, password?: string): void {
     const loginUsername = username ?? users.valid.standard.username;
     const loginPassword = password ?? users.valid.standard.password;
-    LoginPageActions.enterUsername(loginUsername);
-    LoginPageActions.enterPassword(loginPassword);
+    LoginPageActions.enterUsernameInput(loginUsername);
+    LoginPageActions.enterPasswordInput(loginPassword);
     LoginPageActions.clickLoginButton();
   }
 
@@ -55,7 +55,7 @@ export class LoginPageActions {
    * @param expectedMessage - The expected error message text
    */
   static verifyErrorMessage(expectedMessage: string): void {
-    cy.get(loginPageObjects.errorMessageContainer)
+    cy.findByTestId(loginPageObjects.errorMessageContainerTestId)
       .should('be.visible')
       .and('contain.text', expectedMessage);
   }
@@ -64,8 +64,8 @@ export class LoginPageActions {
    * Verify user is on the login page
    */
   static verifyOnLoginPage(): void {
-    cy.get(loginPageObjects.usernameInput).should('be.visible');
-    cy.get(loginPageObjects.passwordInput).should('be.visible');
-    cy.get(loginPageObjects.loginButton).should('be.visible');
+    cy.findByTestId(loginPageObjects.usernameInputTestId).should('be.visible');
+    cy.findByTestId(loginPageObjects.passwordInputTestId).should('be.visible');
+    cy.findByTestId(loginPageObjects.loginButtonTestId).should('be.visible');
   }
 }

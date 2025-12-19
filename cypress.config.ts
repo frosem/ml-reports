@@ -4,7 +4,7 @@ import { allureCypress } from "allure-cypress/reporter";
 
 export default defineConfig({
   e2e: {
-    specPattern: 'cypress/e2e/**/*.specs.cy.ts',
+    specPattern: 'cypress/e2e/**/*.specs.ts',
     setupNodeEvents(on, config) {
       allureWriter(on, config);
       allureCypress(on, {

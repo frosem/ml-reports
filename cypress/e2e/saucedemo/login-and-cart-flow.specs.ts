@@ -1,6 +1,6 @@
-import { LoginPageActions } from '../../page-actions/LoginPageActions';
-import { InventoryPageActions } from '../../page-actions/InventoryPageActions';
-import { CartPageActions } from '../../page-actions/CartPageActions';
+import { CartPageActions } from '@cypress-page-actions/CartPageActions';
+import { InventoryPageActions } from '@cypress-page-actions/InventoryPageActions';
+import { LoginPageActions } from '@cypress-page-actions/LoginPageActions';
 
 describe('SauceDemo - Complete Login and Add to Cart Flow', () => {
   it('should complete full flow: login -> add item -> verify in cart', () => {

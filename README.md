@@ -1,42 +1,70 @@
 # ml-cypress-testing
 
-Cypress E2E Testing Framework with Allure Reports and Jira Integration
+E2E Testing Framework with Cypress, Playwright, Allure Reports, and Jira Integration
 
 ## 🚀 Features
 
 - **Cypress E2E Tests** - Automated browser testing with TypeScript
+- **Playwright E2E Tests** - Cross-browser testing with modern test runner
 - **Allure Reports** - Beautiful, detailed test reports
 - **Jira Integration** - Automatic bug creation for failed tests
 - **GitHub Actions CI/CD** - Automated test execution pipeline
 - **GitHub Pages** - Allure report hosting
+- **Shared Fixtures & Page Objects** - Cross-framework test data and locators
 
 ## 📦 Installation
+
+### Install Dependencies
 
 ```bash
 npm install
 ```
 
+### Install Playwright Browsers
+
+```bash
+npx playwright install
+```
+
 ## 🧪 Running Tests
 
-### Run tests locally with Allure
+### Cypress
+
+#### Run Cypress tests with Allure
 
 ```bash
 npm run test:allure
 ```
 
-### Run tests in headed Chrome browser
+#### Run Cypress in headed Chrome browser
 
 ```bash
 npm run browser:chrome
 ```
 
-### Generate and view Allure report
+### Playwright
+
+#### Run Playwright tests
+
+```bash
+npm run playwright:test
+```
+
+#### Run Playwright with UI mode
+
+```bash
+npm run playwright:ui
+```
+
+### Allure Reports
+
+#### Generate and view Allure report
 
 ```bash
 npm run allure:report
 ```
 
-### Clean previous results
+#### Clean previous results
 
 ```bash
 npm run allure:clean
@@ -123,15 +151,27 @@ The workflow runs on:
 ml-cypress/
 ├── .github/
 │   └── workflows/
-│       └── cypress-tests.yml    # CI/CD pipeline
+│       ├── cypress-tests.yml    # CI/CD pipeline
+│       └── pr-validation.yml    # PR validation checks
 ├── cypress/
-│   ├── e2e/                     # Test specs
-│   ├── fixtures/                # Test data
-│   ├── page-actions/            # Page action helpers
-│   ├── page-objects/            # Page object models
+│   ├── e2e/                     # Cypress test specs
+│   ├── page-actions/            # Cypress page action helpers
 │   └── support/                 # Custom commands
+├── fixtures/                    # Shared test data (cross-framework)
+│   ├── error-messages.json
+│   ├── products.json
+│   ├── urls.json
+│   └── users.json
+├── page-objects/                # Shared page objects (cross-framework)
+│   ├── CartPageObjects.ts
+│   ├── InventoryPageObjects.ts
+│   └── LoginPageObjects.ts
+├── playwright/
+│   ├── page-actions/            # Playwright page action helpers
+│   ├── playwright.config.ts     # Playwright configuration
+│   └── tests/                   # Playwright test specs
 ├── scripts/
-│   ├── create-jira-bugs.ts      # Jira integration script (TypeScript)
+│   ├── create-jira-bugs.ts      # Jira integration script
 │   └── jira-config.example.json # Example configuration
 ├── allure-results/              # Test results (generated)
 ├── allure-report/               # HTML report (generated)
@@ -146,16 +186,25 @@ ml-cypress/
 ### Cypress Configuration
 
 Edit `cypress.config.ts` to customize:
-- `specPattern` - Test file patterns
-- `viewportWidth/Height` - Browser viewport size
 - `defaultCommandTimeout` - Command timeout duration
+- `specPattern` - Test file patterns
 - `video` - Video recording on/off
+- `viewportWidth/Height` - Browser viewport size
+
+### Playwright Configuration
+
+Edit `playwright/playwright.config.ts` to customize:
+- `projects` - Browser configurations (Chromium, Firefox, WebKit)
+- `testDir` - Test directory location
+- `testIdAttribute` - Custom test ID attribute selector
+- `timeout` - Test timeout duration
+- `use.trace` - Trace collection settings
 
 ### Allure Configuration
 
 Allure settings in `cypress.config.ts`:
-- `resultsDir` - Where to store results
 - `allureReuseAfterSpec` - Reuse report between specs
+- `resultsDir` - Where to store results
 
 ## 📊 Viewing Reports
 
@@ -173,10 +222,19 @@ Visit: `https://<username>.github.io/<repo-name>/allure-report`
 
 ### Adding New Tests
 
+#### Cypress Tests
+
 1. Create a new spec file in `cypress/e2e/`
-2. Use page objects from `cypress/page-objects/`
+2. Use shared page objects from `page-objects/`
 3. Use page actions from `cypress/page-actions/`
-4. Run tests to verify
+4. Run tests with `npm run test:allure`
+
+#### Playwright Tests
+
+1. Create a new spec file in `playwright/tests/`
+2. Use shared page objects from `page-objects/`
+3. Use page actions from `playwright/page-actions/`
+4. Run tests with `npm run playwright:test`
 
 ### Test Naming Convention
 
@@ -192,12 +250,14 @@ describe('Feature - Specific Functionality', () => {
 
 | Script | Description |
 |--------|-------------|
-| `npm run test:allure` | Run tests with Allure reporting |
-| `npm run browser:chrome` | Run tests in headed Chrome |
-| `npm run allure:report` | Generate and open Allure report |
 | `npm run allure:clean` | Clean previous results |
+| `npm run allure:report` | Generate and open Allure report |
+| `npm run browser:chrome` | Run Cypress tests in headed Chrome |
 | `npm run jira:create-bugs` | Create Jira bugs from failures |
 | `npm run jira:dry-run` | Test Jira integration without creating issues |
+| `npm run playwright:test` | Run Playwright tests |
+| `npm run playwright:ui` | Run Playwright with interactive UI |
+| `npm run test:allure` | Run Cypress tests with Allure reporting |
 | `npm run test:ci` | Full CI pipeline (clean, test, create bugs) |
 
 ## 🤝 Contributing
