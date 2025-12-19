@@ -2,8 +2,8 @@
  * Cart Page Actions
  * Application actions for the Cart page using CartPageObjects
  */
-import { cartPageObjects } from '../page-objects/CartPageObjects';
-import urls from '../fixtures/urls.json';
+import { cartPageObjects } from '../../page-objects/CartPageObjects';
+import urls from '../../fixtures/urls.json';
 
 export class CartPageActions {
   /**
@@ -11,7 +11,7 @@ export class CartPageActions {
    */
   static verifyOnCartPage(): void {
     cy.url().should('include', urls.paths.cart);
-    cy.get(cartPageObjects.cartItemsContainer).should('exist');
+    cy.findAllByTestId(cartPageObjects.cartItemsContainerTestId).should('exist');
   }
 
   /**
@@ -19,7 +19,7 @@ export class CartPageActions {
    * @returns Cypress chainable with the count
    */
   static getCartItemCount(): Cypress.Chainable<number> {
-    return cy.get(cartPageObjects.cartItemsContainer).its('length');
+    return cy.findAllByTestId(cartPageObjects.cartItemsContainerTestId).its('length');
   }
 
   /**
@@ -27,7 +27,7 @@ export class CartPageActions {
    * @param expectedCount - The expected number of items
    */
   static verifyCartItemCount(expectedCount: number): void {
-    cy.get(cartPageObjects.cartItemsContainer).should('have.length', expectedCount);
+    cy.findAllByTestId(cartPageObjects.cartItemsContainerTestId).should('have.length', expectedCount);
   }
 
   /**
@@ -35,7 +35,7 @@ export class CartPageActions {
    * @param itemName - The name of the item to verify
    */
   static verifyCartContainsItem(itemName: string): void {
-    cy.get(cartPageObjects.cartItemNameContainer).should('contain.text', itemName);
+    cy.findAllByTestId(cartPageObjects.cartItemNameContainerTestId).should('contain.text', itemName);
   }
 
   /**
@@ -43,7 +43,7 @@ export class CartPageActions {
    * @returns Cypress chainable with the item name
    */
   static getFirstCartItemName(): Cypress.Chainable<string> {
-    return cy.get(cartPageObjects.cartItemNameContainer).first().invoke('text');
+    return cy.findAllByTestId(cartPageObjects.cartItemNameContainerTestId).first().invoke('text');
   }
 
   /**
@@ -51,7 +51,15 @@ export class CartPageActions {
    * @returns Cypress chainable with the item price
    */
   static getFirstCartItemPrice(): Cypress.Chainable<string> {
-    return cy.get(cartPageObjects.cartItemPriceContainer).first().invoke('text');
+    return cy.findAllByTestId(cartPageObjects.cartItemPriceContainerTestId).first().invoke('text');
+  }
+
+  /**
+   * Verify the first cart item has the expected price
+   * @param expectedPrice - The expected price text
+   */
+  static verifyFirstCartItemPrice(expectedPrice: string): void {
+    cy.findAllByTestId(cartPageObjects.cartItemPriceContainerTestId).first().should('contain.text', expectedPrice);
   }
 
   /**
@@ -59,9 +67,9 @@ export class CartPageActions {
    * @param index - The index of the item to remove (0-based)
    */
   static removeItemByIndex(index: number): void {
-    cy.get(cartPageObjects.cartItemsContainer)
+    cy.findAllByTestId(cartPageObjects.cartItemsContainerTestId)
       .eq(index)
-      .find(cartPageObjects.removeButton)
+      .find(cartPageObjects.removeButtonCSS)
       .click();
   }
 
@@ -69,21 +77,21 @@ export class CartPageActions {
    * Click continue shopping button
    */
   static clickContinueShopping(): void {
-    cy.get(cartPageObjects.continueShoppingButton).click();
+    cy.findByTestId(cartPageObjects.continueShoppingButtonTestId).click();
   }
 
   /**
    * Click checkout button
    */
   static clickCheckout(): void {
-    cy.get(cartPageObjects.checkoutButton).click();
+    cy.findByTestId(cartPageObjects.checkoutButtonTestId).click();
   }
 
   /**
    * Verify cart is empty
    */
   static verifyCartIsEmpty(): void {
-    cy.get(cartPageObjects.cartItemsContainer).should('not.exist');
+    cy.findAllByTestId(cartPageObjects.cartItemsContainerTestId).should('not.exist');
   }
 }
 

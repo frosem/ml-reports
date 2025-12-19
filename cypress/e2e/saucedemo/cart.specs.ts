@@ -1,15 +1,15 @@
-import { LoginPageActions } from '../../page-actions/LoginPageActions';
-import { InventoryPageActions } from '../../page-actions/InventoryPageActions';
 import { CartPageActions } from '../../page-actions/CartPageActions';
-import { cartPageObjects } from '../../page-objects/CartPageObjects';
+import { InventoryPageActions } from '../../page-actions/InventoryPageActions';
+import { LoginPageActions } from '../../page-actions/LoginPageActions';
+import products from '../../../fixtures/products.json';
+
+beforeEach(() => {
+  LoginPageActions.visitLoginPage();
+  LoginPageActions.login();
+  InventoryPageActions.verifyOnInventoryPage();
+});
 
 describe('SauceDemo - Add Item to Cart', () => {
-  beforeEach(() => {
-    // Login before each test (using default standard user)
-    LoginPageActions.visitLoginPage();
-    LoginPageActions.login();
-    InventoryPageActions.verifyOnInventoryPage();
-  });
 
   it('should add first item to cart and verify in cart', () => {
     // Get the name of the first item before adding to cart
@@ -34,9 +34,11 @@ describe('SauceDemo - Add Item to Cart', () => {
     });
   });
 
-  it('should add item to cart by index and verify', () => {
-    // Add the second item (index 2) to cart
-    InventoryPageActions.addItemToCartByIndex(2);
+  it('should add item to cart by name and verify', () => {
+    const product = products.items[2];
+
+    // Add item by name to cart
+    InventoryPageActions.addItemToCartByName(product.name);
 
     // Verify cart badge shows 1 item
     InventoryPageActions.verifyCartBadgeCount(1);
@@ -47,6 +49,9 @@ describe('SauceDemo - Add Item to Cart', () => {
 
     // Verify cart contains 1 item
     CartPageActions.verifyCartItemCount(1);
+
+    // Verify the item name matches
+    CartPageActions.verifyCartContainsItem(product.name);
   });
 
   it('should add multiple items to cart', () => {
@@ -83,7 +88,7 @@ describe('SauceDemo - Add Item to Cart', () => {
 
         // Verify item details in cart
         CartPageActions.verifyCartContainsItem(itemName);
-        cy.get(cartPageObjects.cartItemPriceContainer).first().should('contain.text', itemPrice);
+        CartPageActions.verifyFirstCartItemPrice(itemPrice);
       });
     });
   });

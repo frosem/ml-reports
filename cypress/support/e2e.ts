@@ -14,8 +14,12 @@
 // ***********************************************************
 
 // Import commands.js using ES2015 syntax:
-import './commands'
+import '@cypress/puppeteer/support'
+import '@shelex/cypress-allure-plugin';
+import '@testing-library/cypress/add-commands';
 import 'allure-cypress';
 import 'allure-cypress/commands';
-import '@shelex/cypress-allure-plugin';
-import '@cypress/puppeteer/support'
+import './commands'
+import { configure } from '@testing-library/cypress';
+
+configure({ testIdAttribute: 'data-test' });
