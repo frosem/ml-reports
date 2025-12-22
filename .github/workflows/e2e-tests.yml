@@ -1,4 +1,4 @@
-name: Allure Reports and Bug Reporting integration
+name: E2E Tests Report
 
 on:
   workflow_dispatch:
@@ -11,6 +11,11 @@ on:
         options:
           - cypress
           - playwright
+      create_bug_reports:
+        description: 'Create bug reports in Jira for failed tests'
+        required: false
+        default: false
+        type: boolean
 
 # Required permissions for deploying to GitHub Pages
 permissions:
@@ -122,9 +127,10 @@ jobs:
           path: allure-report/${{ inputs.framework }}/
           retention-days: 30
 
-      # Create bug reports in Jira for any test failures
+      # Create bug reports in Jira for any test failures (only if flag is enabled)
       - name: Create bug reports in Jira for test failures
-        if: failure() || steps.tests.outcome == 'failure'
+        id: jira
+        if: (failure() || steps.tests.outcome == 'failure') && inputs.create_bug_reports == true
         env:
           ALLURE_RESULTS_DIR: ./allure-results/${{ inputs.framework }}
           GITHUB_BRANCH: ${{ github.ref_name }}
@@ -145,22 +151,43 @@ jobs:
 
       # Prepare combined deployment (report + history at branch/framework)
       - name: Prepare deployment structure
+        id: deploy-prep
         if: always()
         run: |
           SANITIZED_BRANCH="${{ steps.sanitize.outputs.branch }}"
           FRAMEWORK="${{ inputs.framework }}"
+          RUN_ID="${{ env.RUN_ID }}"
+          ROOT_PATH="gh-pages/allure-report/${SANITIZED_BRANCH}/${FRAMEWORK}"
+          
           mkdir -p deploy-package
 
-          # Copy individual run report (branch/framework/run_id)
-          mkdir -p "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/${{ env.RUN_ID }}"
-          cp -r "allure-report/${FRAMEWORK}"/* "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/${{ env.RUN_ID }}/"
+          # 1. Deploy current report to {branch}/{framework}/{run-id}
+          mkdir -p "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/${RUN_ID}"
+          cp -r "allure-report/${FRAMEWORK}"/* "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/${RUN_ID}/"
+          echo "✅ Current report deployed to: ${SANITIZED_BRANCH}/${FRAMEWORK}/${RUN_ID}"
 
-          # Copy history to framework level for next run (branch/framework/history)
-          mkdir -p "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/history"
-          cp -r "allure-report/${FRAMEWORK}/history"/* "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/history/" 2>/dev/null || true
+          # 2. Deploy current report to root (always overwrite with latest)
+          cp -r "allure-report/${FRAMEWORK}"/* "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/"
+          echo "✅ Root path updated with current report (latest status)"
 
-          echo "Deployment structure:"
-          ls -la "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/"
+          # 3. Find the previous run-id (penultimate) for the summary link
+          if [ -d "${ROOT_PATH}" ]; then
+            PREVIOUS_RUN_ID=$(find "${ROOT_PATH}" -maxdepth 1 -type d -name '[0-9]*' | sort -n | tail -1 | xargs basename 2>/dev/null || echo "")
+            if [ -n "$PREVIOUS_RUN_ID" ]; then
+              echo "previous_run_id=${PREVIOUS_RUN_ID}" >> $GITHUB_OUTPUT
+              echo "📂 Found previous run: ${PREVIOUS_RUN_ID}"
+            else
+              echo "previous_run_id=" >> $GITHUB_OUTPUT
+              echo "📍 No previous run found (first run)"
+            fi
+          else
+            echo "previous_run_id=" >> $GITHUB_OUTPUT
+            echo "📍 First run on this branch"
+          fi
+
+          echo ""
+          echo "📦 Deployment structure:"
+          find "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/" -maxdepth 2 -type d | head -20
 
       # Single deploy to avoid race conditions
       - name: Deploy to GitHub Pages
@@ -173,26 +200,66 @@ jobs:
           publish_dir: ./deploy-package
 
       # Add test results summary to GitHub Actions summary page
-      - name: Test Results Summary
+      - name: E2E Reports Summary
         if: always()
         run: |
           SANITIZED_BRANCH=$(echo "${{ env.BRANCH_NAME }}" | sed 's/\//-/g')
-          echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Framework:** \`${{ inputs.framework }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Branch:** \`${{ env.BRANCH_NAME }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "**Run ID:** \`${{ env.RUN_ID }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.tests.outcome }}" == "success" ]; then
-            echo "✅ All tests passed!" >> $GITHUB_STEP_SUMMARY
+          BASE_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/allure-report"
+          PREVIOUS_RUN_ID="${{ steps.deploy-prep.outputs.previous_run_id }}"
+          FRAMEWORK="${{ inputs.framework }}"
+          
+          # Framework-specific icon and badge
+          if [ "$FRAMEWORK" == "cypress" ]; then
+            FRAMEWORK_ICON='<img src="https://www.cypress.io/favicon.svg" alt="Cypress" width="20" height="20" />'
+            FRAMEWORK_BADGE='![Cypress](https://img.shields.io/badge/-Cypress-69D3A7?logo=cypress&logoColor=white&style=flat-square)'
           else
-            echo "❌ Some tests failed. Check Allure report for details." >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "📋 Jira bugs have been created for failed tests." >> $GITHUB_STEP_SUMMARY
+            FRAMEWORK_ICON='<img src="https://playwright.dev/img/playwright-logo.svg" alt="Playwright" width="20" height="20" />'
+            FRAMEWORK_BADGE='![Playwright](https://img.shields.io/badge/-Playwright-2EAD33?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0tMiAxNWwtNS01IDEuNDEtMS40MUwxMCAxNC4xN2w3LjU5LTcuNTlMMTkgOGwtOSA5eiIvPjwvc3ZnPg==&logoColor=white&style=flat-square)'
+          fi
+          ALLURE_BADGE='![Allure](https://img.shields.io/badge/Allure-Reports-FF5722?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0wIDE4Yy00LjQxIDAtOC0zLjU5LTgtOHMzLjU5LTggOC04IDggMy41OSA4IDgtMy41OSA4LTggOHoiLz48L3N2Zz4=)'
+          
+          # Header with badges
+          echo "# 📊 E2E Test Reports" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "${FRAMEWORK_BADGE} ${ALLURE_BADGE}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Test info table with framework icon (no headers)
+          echo "| | |" >> $GITHUB_STEP_SUMMARY
+          echo "|:--|:--|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Framework** | ${FRAMEWORK_ICON} \`${FRAMEWORK}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Branch** | \`${{ env.BRANCH_NAME }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Status badge
+          if [ "${{ steps.tests.outcome }}" == "success" ]; then
+            echo "> ✅ **All tests passed!**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "> ❌ **Some tests failed.** Check the report for details." >> $GITHUB_STEP_SUMMARY
+            if [ "${{ inputs.create_bug_reports }}" == "true" ]; then
+              ISSUE_LINKS="${{ steps.jira.outputs.issue_links }}"
+              if [ -n "$ISSUE_LINKS" ]; then
+                echo ">" >> $GITHUB_STEP_SUMMARY
+                echo "> 📋 **Bug reports created in Jira:** ${ISSUE_LINKS}" >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "🔗 <a href=\"https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/allure-report/${SANITIZED_BRANCH}/${{ inputs.framework }}/${{ env.RUN_ID }}\" target=\"_blank\">View Allure Report for this run</a>" >> $GITHUB_STEP_SUMMARY
+          
+          # Separator
+          echo "---" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📂 <a href=\"https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/allure-report/${SANITIZED_BRANCH}/${{ inputs.framework }}\" target=\"_blank\">View all ${{ inputs.framework }} reports for this branch</a>" >> $GITHUB_STEP_SUMMARY
+          
+          # Report links section with Allure icon
+          ALLURE_ICON='<img src="https://avatars.githubusercontent.com/u/5879127" alt="Allure" width="20" height="20" />'
+          echo "## ${ALLURE_ICON} Report Links" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📁 <a href=\"https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/allure-report/\" target=\"_blank\">View all branch reports</a>" >> $GITHUB_STEP_SUMMARY
+          echo "> 🔗 [Report for this run](${BASE_URL}/${SANITIZED_BRANCH}/${FRAMEWORK}/${{ env.RUN_ID }})" >> $GITHUB_STEP_SUMMARY
+          echo ">" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -n "$PREVIOUS_RUN_ID" ]; then
+            echo "> 📂 [Report for previous run](${BASE_URL}/${SANITIZED_BRANCH}/${FRAMEWORK}/${PREVIOUS_RUN_ID})" >> $GITHUB_STEP_SUMMARY
+            echo ">" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "> 📊 [Review latest report (permanent link)](${BASE_URL}/${SANITIZED_BRANCH}/${FRAMEWORK})" >> $GITHUB_STEP_SUMMARY

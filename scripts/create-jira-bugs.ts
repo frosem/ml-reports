@@ -712,10 +712,17 @@ async function main(): Promise<void> {
     // Write results to file for GitHub Actions
     const outputFile = process.env.GITHUB_OUTPUT;
     if (outputFile) {
+        // Format issue links for display in summary
+        const allIssues = [...results.created, ...results.updated];
+        const issueLinks = allIssues.map(r => `[${r.issueKey}](${r.url})`).join(', ');
+        const issueDetails = JSON.stringify(allIssues);
+        
         const output = [
+            `errors=${results.errors.length}`,
+            `issue_links=${issueLinks}`,
             `issues_created=${results.created.length}`,
-            `issues_updated=${results.updated.length}`,
-            `errors=${results.errors.length}`
+            `issues_details=${issueDetails}`,
+            `issues_updated=${results.updated.length}`
         ].join('\n');
         fs.appendFileSync(outputFile, output);
     }
