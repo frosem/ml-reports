@@ -1,0 +1,56 @@
+{
+  "epics": {
+    "cart": "Cart Management",
+    "checkout": "Checkout Process",
+    "userManagement": "User Management"
+  },
+  "features": {
+    "authentication": {
+      "name": "Login",
+      "stories": {
+        "accountSecurity": "Account Security",
+        "invalidLogin": "Invalid Credentials",
+        "validLogin": "Valid Credentials"
+      }
+    },
+    "cartManagement": {
+      "name": "Cart Operations",
+      "stories": {
+        "addToCart": "Add to Cart",
+        "removeFromCart": "Remove from Cart",
+        "viewCart": "View Cart"
+      }
+    },
+    "checkout": {
+      "name": "Order Checkout",
+      "stories": {
+        "completeOrder": "Complete Order",
+        "enterShippingInfo": "Shipping Information",
+        "orderConfirmation": "Order Confirmation"
+      }
+    },
+    "inventory": {
+      "name": "Product Inventory",
+      "stories": {
+        "filterProducts": "Filter Products",
+        "sortProducts": "Sort Products",
+        "viewProductDetails": "Product Details"
+      }
+    }
+  },
+  "owners": {
+    "qaTeam": "QA Team"
+  },
+  "parentSuite": "SauceDemo",
+  "testSuites": {
+    "authentication": "Login Tests",
+    "cartOperations": "Cart Tests",
+    "checkoutFlow": "Checkout Tests",
+    "inventory": "Inventory Tests"
+  },
+  "tags": {
+    "regression": "regression",
+    "smoke": "smoke"
+  }
+}
+
