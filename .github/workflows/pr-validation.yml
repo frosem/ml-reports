@@ -1,38 +1,12 @@
-name: PR Validation
+name: PR validation checks
 
 on:
   pull_request:
 
 jobs:
-  setup:
-    name: Setup Configuration
+  lint-and-typecheck:
+    name: Lint & Type Check
     runs-on: ubuntu-latest
-    outputs:
-      node-version: ${{ steps.get-node-version.outputs.node_version }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Get Node version from package.json
-        id: get-node-version
-        run: |
-          set -e
-          if [ ! -f package.json ]; then
-            echo "Error: package.json file not found"
-            exit 1
-          fi
-          NODE_VERSION=$(jq -r '.engines.node' package.json)
-          if [ -z "$NODE_VERSION" ] || [ "$NODE_VERSION" = "null" ]; then
-            echo "Error: engines.node not found in package.json"
-            exit 1
-          fi
-          echo "node_version=$NODE_VERSION" >> $GITHUB_OUTPUT
-          echo "Detected Node version: $NODE_VERSION"
-
-  node-build:
-    name: Build & Cache Dependencies
-    runs-on: ubuntu-latest
-    needs: [setup]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -40,80 +14,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ needs.setup.outputs.node-version }}
+          node-version-file: 'package.json'
           cache: 'npm'
-
-      # Cache dependencies to speed up workflow and reduce npm registry calls
-      # Caches both node_modules and Cypress binary based on package-lock.json hash
-      - name: node_modules and Cypress cache
-        id: node-modules-cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules/
-            ~/.cache/Cypress
-          key: ${{ runner.os }}-node-cypress-${{ hashFiles('package-lock.json') }}
 
       - name: Install dependencies
-        if: steps.node-modules-cache.outputs.cache-hit != 'true'
         run: npm ci
-
-  type-check:
-    name: TypeScript Type Check
-    runs-on: ubuntu-latest
-    needs: [setup, node-build]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ needs.setup.outputs.node-version }}
-          cache: 'npm'
-
-      # Restore cached dependencies from the build job
-      - name: node_modules and Cypress cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules/
-            ~/.cache/Cypress
-          key: ${{ runner.os }}-node-cypress-${{ hashFiles('package-lock.json') }}
-
-      # Install dependencies if cache miss (fallback)
-      - name: Install dependencies (if cache miss)
-        run: npm ci --prefer-offline --no-audit
-
-      # Validate TypeScript code for type errors without emitting output files
-      # This catches type-related issues early in the PR process
-      - name: Type check
-        run: ./node_modules/.bin/tsc --noEmit
-
-  indentation-check:
-    name: Check Indentation
-    runs-on: ubuntu-latest
-    outputs:
-      indent-size: ${{ steps.get-indent-size.outputs.indent_size }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Get indent size from .editorconfig
-        id: get-indent-size
-        run: |
-          set -e
-          if [ ! -f .editorconfig ]; then
-            echo "Error: .editorconfig file not found"
-            exit 1
-          fi
-          INDENT_SIZE=$(grep -E '^\s*indent_size\s*=' .editorconfig | head -n1 | cut -d'=' -f2 | tr -d ' ')
-          if [ -z "$INDENT_SIZE" ]; then
-            echo "Error: indent_size not found in .editorconfig"
-            exit 1
-          fi
-          echo "indent_size=$INDENT_SIZE" >> $GITHUB_OUTPUT
-          echo "Detected indent size: $INDENT_SIZE spaces"
 
       - name: Install editorconfig-checker
         run: |
@@ -121,7 +26,7 @@ jobs:
           tar xzf ec-linux-amd64.tar.gz
           chmod +x bin/ec-linux-amd64
 
-      - name: Check indentation and formatting
+      - name: Check indentation
         run: |
           ./bin/ec-linux-amd64 \
             --exclude "node_modules" \
@@ -131,10 +36,12 @@ jobs:
             --exclude "cypress/videos" \
             --exclude "cypress/screenshots"
 
-  cypress-verify:
-    name: Validate Cypress Config
+      - name: Type check
+        run: npm run typecheck
+
+  validate-frameworks:
+    name: Validate Frameworks
     runs-on: ubuntu-latest
-    needs: [setup, node-build]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -142,59 +49,18 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ needs.setup.outputs.node-version }}
+          node-version-file: 'package.json'
           cache: 'npm'
 
-      # Restore cached dependencies from the build job
-      - name: node_modules and Cypress cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules/
-            ~/.cache/Cypress
-          key: ${{ runner.os }}-node-cypress-${{ hashFiles('package-lock.json') }}
+      - name: Install dependencies
+        run: npm ci
 
-      # Install dependencies if cache miss (fallback)
-      - name: Install dependencies (if cache miss)
-        run: npm ci --prefer-offline --no-audit
-
-      # Ensure Cypress binary is installed in the cache directory
-      # This is necessary because Cypress requires a separate binary installation
-      - name: Ensure Cypress binary exists
-        run: ./node_modules/.bin/cypress install
-
-      # Verify that Cypress is properly installed and can run
-      # This catches configuration or installation issues before running actual tests
-      - name: Verify Cypress
-        run: ./node_modules/.bin/cypress verify
-
-  pr-summary:
-    name: PR Summary
-    runs-on: ubuntu-latest
-    needs: [cypress-verify, indentation-check, type-check]
-    if: always()
-    steps:
-      # Generate a summary of all validation checks for easy PR review
-      # This appears on the GitHub Actions summary page
-      - name: Generate Summary
+      - name: Install and verify Cypress
         run: |
-          INDENT_SIZE="${{ needs.indentation-check.outputs.indent-size }}"
-          echo "## PR Validation Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ needs.indentation-check.result }}" == "success" ]; then
-            echo "✅ Indentation check passed ($INDENT_SIZE spaces)" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ Indentation check failed" >> $GITHUB_STEP_SUMMARY
-          fi
-          if [ "${{ needs.type-check.result }}" == "success" ]; then
-            echo "✅ TypeScript type check passed" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ TypeScript type check failed" >> $GITHUB_STEP_SUMMARY
-          fi
-          if [ "${{ needs.cypress-verify.result }}" == "success" ]; then
-            echo "✅ Cypress configuration valid" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ Cypress configuration invalid" >> $GITHUB_STEP_SUMMARY
-          fi
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "💡 Run the full test suite manually via **Actions → Cypress Tests → Run workflow**" >> $GITHUB_STEP_SUMMARY
+          npm run cypress:install
+          npm run cypress:verify
+
+      - name: Install and verify Playwright
+        run: |
+          npm run playwright:install
+          npm run playwright:verify

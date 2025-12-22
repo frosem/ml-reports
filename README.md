@@ -1,272 +1,245 @@
-# ml-cypress-testing
+# ml-allure-reports
 
-E2E Testing Framework with Cypress, Playwright, Allure Reports, and Jira Integration
+E2E Testing Framework with Allure Reports for Cypress and Playwright.
 
-## 🚀 Features
+![Node.js](https://img.shields.io/badge/Node.js-20+-339933?logo=node.js&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)
+![Cypress](https://img.shields.io/badge/Cypress-14.x-69D3A7?logo=cypress&logoColor=white)
+![Playwright](https://img.shields.io/badge/Playwright-1.x-2EAD33?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0tMiAxNWwtNS01IDEuNDEtMS40MUwxMCAxNC4xN2w3LjU5LTcuNTlMMTkgOGwtOSA5eiIvPjwvc3ZnPg==&logoColor=white)
+![Allure](https://img.shields.io/badge/Allure-Report-FF5722?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0wIDE4Yy00LjQxIDAtOC0zLjU5LTgtOHMzLjU5LTggOC04IDggMy41OSA4IDgtMy41OSA4LTggOHoiLz48L3N2Zz4=)
+---
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-CI/CD-2088FF?logo=githubactions&logoColor=white&style=flat-square)
+![Jira](https://img.shields.io/badge/Jira-Integration-0052CC?logo=jira&logoColor=white&style=flat-square)
 
-- **Cypress E2E Tests** - Automated browser testing with TypeScript
-- **Playwright E2E Tests** - Cross-browser testing with modern test runner
-- **Allure Reports** - Beautiful, detailed test reports
-- **Jira Integration** - Automatic bug creation for failed tests
-- **GitHub Actions CI/CD** - Automated test execution pipeline
-- **GitHub Pages** - Allure report hosting
-- **Shared Fixtures & Page Objects** - Cross-framework test data and locators
+---
+
+## 📑 Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Running Tests](#running-tests)
+- [Allure Reports](#allure-reports)
+- [Jira Integration](#jira-integration)
+- [CI/CD](#cicd)
+- [Project Structure](#project-structure)
+- [Scripts Reference](#scripts-reference)
+
+---
+
+## ⚙️ Prerequisites
+
+| Requirement | Version | Notes |
+|-------------|---------|-------|
+| Node.js | 20+ | [Download](https://nodejs.org/) |
+| Java JDK | 8+ | Required by Allure CLI. [Download](https://adoptium.net/) |
+
+Verify installations:
+
+```bash
+node --version
+java -version
+```
+
+---
 
 ## 📦 Installation
 
-### Install Dependencies
-
 ```bash
+# Clone and install dependencies
 npm install
+
+# Install Playwright browsers (if using Playwright)
+npm run playwright:install
 ```
 
-### Install Playwright Browsers
-
-```bash
-npx playwright install
-```
+---
 
 ## 🧪 Running Tests
 
-### Cypress
-
-#### Run Cypress tests with Allure
+### ![Cypress](https://img.shields.io/badge/-Cypress-69D3A7?logo=cypress&logoColor=white&style=flat-square)
 
 ```bash
-npm run test:allure
+npm run cypress:test          # Run tests, output results to allure-results/cypress
+npm run cypress:allure        # Run tests, generate report, open in browser
 ```
 
-#### Run Cypress in headed Chrome browser
+### ![Playwright](https://img.shields.io/badge/-Playwright-2EAD33?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0tMiAxNWwtNS01IDEuNDEtMS40MUwxMCAxNC4xN2w3LjU5LTcuNTlMMTkgOGwtOSA5eiIvPjwvc3ZnPg==&logoColor=white&style=flat-square)
 
 ```bash
-npm run browser:chrome
+npm run playwright:test       # Run tests, output results to allure-results/playwright
+npm run playwright:allure     # Run tests, generate report, open in browser
 ```
 
-### Playwright
+---
 
-#### Run Playwright tests
+## 📊 Allure Reports
 
-```bash
-npm run playwright:test
+### Directory Structure
+
+```
+allure-results/
+├── cypress/                  # Cypress test results
+└── playwright/               # Playwright test results
+
+allure-report/
+├── cypress/                  # Generated Cypress report
+└── playwright/               # Generated Playwright report
 ```
 
-#### Run Playwright with UI mode
+### Allure CLI Commands
 
-```bash
-npm run playwright:ui
-```
+Manage reports via the `allure-cli.ts` script:
 
-### Allure Reports
+| Command | Description |
+|---------|-------------|
+| `npm run allure -- clean` | Remove all results and reports |
+| `npm run allure -- clean <framework>` | Remove results and reports for specified framework |
+| `npm run allure -- clean:old` | Remove results older than 30 days |
+| `npm run allure -- generate <framework>` | Generate report with history |
+| `npm run allure -- open <framework>` | Open the generated report |
 
-#### Generate and view Allure report
+### Report Features
 
-```bash
-npm run allure:report
-```
+**Categories** — Failures are auto-classified by error patterns (e.g., timeouts, assertion mismatches). Add or modify categories in `shared/config/allure.config.ts`.
 
-#### Clean previous results
+**Links** — Link tests to management tools using `storyLink()` and `testLink()` helpers.
 
-```bash
-npm run allure:clean
-```
+### Allure Helpers
+
+Functions created in `AllureTools.ts`:
+
+| Function | Purpose |
+|----------|---------|
+| `allureStep` | Decorator to wrap methods as Allure steps |
+| `attachAssertion` | Attach assertion details as HTML |
+| `storyLink` | URL link to a ticket story |
+| `testLink` | URL link to a test case |
+
+> 💡 **Playwright Tip:** Use `allureExpect()` instead of `expect()` — it logs each assertion as an Allure step, improving report readability by showing what was checked and the actual values.
+
+---
 
 ## 🔗 Jira Integration
 
-This project automatically creates Jira bug tickets when tests fail. The integration:
+When tests fail, the `create-jira-bugs.ts` script parses Allure results and creates Jira issues.
 
-1. Parses Allure test results for failures
-2. Checks for existing issues to avoid duplicates
-3. Creates new bugs or adds comments to existing ones
-4. Includes error details, stack traces, and CI/CD context
+### Configuration
 
-### Local Setup
+Set these environment variables:
 
-1. Copy the example config:
-   ```bash
-   cp scripts/jira-config.example.json scripts/jira-config.json
-   ```
+```bash
+export JIRA_BASE_URL="https://your-domain.atlassian.net"
+export JIRA_USER_EMAIL="your-email@example.com"
+export JIRA_API_TOKEN="your-api-token"
+export JIRA_PROJECT_KEY="TEST"
+```
 
-2. Set environment variables:
-   ```bash
-   export JIRA_BASE_URL="https://your-domain.atlassian.net"
-   export JIRA_USER_EMAIL="your-email@example.com"
-   export JIRA_API_TOKEN="your-api-token"
-   export JIRA_PROJECT_KEY="TEST"
-   ```
+> 🔑 Generate an API token at: https://id.atlassian.com/manage-profile/security/api-tokens
 
-3. Generate a Jira API token at: https://id.atlassian.com/manage-profile/security/api-tokens
+### Commands
 
-4. Run the Jira bug creator:
-   ```bash
-   npm run jira:create-bugs
-   ```
+```bash
+npm run jira:create-bugs      # Create Jira issues from failures
+npm run jira:dry-run          # Preview without creating issues
+```
 
-### GitHub Actions Setup
+---
 
-Add these secrets to your GitHub repository (`Settings > Secrets and variables > Actions`):
+## 🔄 CI/CD
 
-| Secret Name | Description | Example |
-|-------------|-------------|---------|
-| `JIRA_BASE_URL` | Your Jira instance URL | `https://your-domain.atlassian.net` |
-| `JIRA_USER_EMAIL` | Email for Jira authentication | `your-email@example.com` |
-| `JIRA_API_TOKEN` | Jira API token | `ATATT3xF...` |
-| `JIRA_PROJECT_KEY` | Project key for bug creation | `TEST` |
+### GitHub Actions
 
-### Environment Variables Reference
+The `e2e-tests.yml` workflow runs tests via GitHub Actions dispatch:
 
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `JIRA_BASE_URL` | ✅ | - | Jira instance URL |
-| `JIRA_USER_EMAIL` | ✅ | - | Jira authentication email |
-| `JIRA_API_TOKEN` | ✅ | - | Jira API token |
-| `JIRA_PROJECT_KEY` | ✅ | - | Project key for issues |
-| `JIRA_ISSUE_TYPE` | ❌ | `Bug` | Issue type to create |
-| `JIRA_PRIORITY` | ❌ | `High` | Issue priority |
-| `JIRA_LABELS` | ❌ | `automated-test-failure,cypress` | Comma-separated labels |
-| `CHECK_EXISTING_ISSUES` | ❌ | `true` | Check for duplicates |
-| `ALLURE_RESULTS_DIR` | ❌ | `./allure-results` | Allure results path |
+1. Navigate to **Actions** → **E2E Tests with Allure Reports & Jira Integration**
+2. Click **Run workflow**
+3. Select `cypress` or `playwright`
+4. Click **Run workflow**
 
-## 🔄 CI/CD Pipeline
+### Required Secrets
 
-The GitHub Actions workflow (`cypress-tests.yml`) automatically:
+Add to repository settings (`Settings > Secrets and variables > Actions`):
 
-1. ⚙️ Sets up Node.js environment
-2. 📦 Installs dependencies
-3. 🧪 Runs Cypress tests with Allure reporting
-4. 📊 Generates Allure report
-5. 📤 Uploads test artifacts
-6. 🐛 Creates Jira bugs for failures
-7. 🌐 Deploys Allure report to GitHub Pages
+| Secret | Description |
+|--------|-------------|
+| `JIRA_API_TOKEN` | Jira API token |
+| `JIRA_BASE_URL` | Jira instance URL |
+| `JIRA_PROJECT_KEY` | Project key for issue creation |
+| `JIRA_USER_EMAIL` | Email for Jira authentication |
 
-### Triggering the Pipeline
+### Report Hosting
 
-The workflow runs on:
-- Push to `main` or `master` branch
-- Pull requests to `main` or `master`
-- Manual trigger via GitHub Actions UI
+Reports deploy to GitHub Pages organized by branch and run ID:
+
+```
+/allure-report/
+├── main/
+│   ├── 12345678901/
+│   └── 12345678902/
+└── feature-branch/
+    └── 12345678903/
+```
+
+---
 
 ## 📁 Project Structure
 
 ```
-ml-cypress/
-├── .github/
-│   └── workflows/
-│       ├── cypress-tests.yml    # CI/CD pipeline
-│       └── pr-validation.yml    # PR validation checks
+ml-allure-reports/
+├── .github/workflows/
+│   ├── e2e-tests.yml             # E2E pipeline
+│   └── pr-validation.yml         # PR checks
 ├── cypress/
-│   ├── e2e/                     # Cypress test specs
-│   ├── page-actions/            # Cypress page action helpers
-│   └── support/                 # Custom commands
-├── fixtures/                    # Shared test data (cross-framework)
-│   ├── error-messages.json
-│   ├── products.json
-│   ├── urls.json
-│   └── users.json
-├── page-objects/                # Shared page objects (cross-framework)
-│   ├── CartPageObjects.ts
-│   ├── InventoryPageObjects.ts
-│   └── LoginPageObjects.ts
+│   ├── e2e/                      # Test specs
+│   ├── page-actions/             # Page action classes
+│   └── support/
+│       └── AllureTools.ts        # Cypress Allure helpers
 ├── playwright/
-│   ├── page-actions/            # Playwright page action helpers
-│   ├── playwright.config.ts     # Playwright configuration
-│   └── tests/                   # Playwright test specs
+│   ├── page-actions/             # Page action classes
+│   ├── support/
+│   │   └── AllureTools.ts        # Playwright Allure helpers
+│   └── tests/                    # Test specs
 ├── scripts/
-│   ├── create-jira-bugs.ts      # Jira integration script
-│   └── jira-config.example.json # Example configuration
-├── allure-results/              # Test results (generated)
-├── allure-report/               # HTML report (generated)
-├── cypress.config.ts            # Cypress configuration
+│   ├── allure-cli.ts             # Allure CLI tool
+│   └── create-jira-bugs.ts       # Jira integration
+├── shared/
+│   ├── allure/
+│   │   ├── AllureStepDecorator.ts
+│   │   └── BaseAllureTools.ts
+│   ├── config/
+│   │   └── allure.config.ts      # Shared Allure configuration
+│   ├── fixtures/                 # Test data (JSON)
+│   └── page-objects/             # Shared page object selectors
+├── cypress.config.ts
+├── playwright.config.ts
 ├── package.json
-├── README.md
 └── tsconfig.json
 ```
 
-## 🔧 Configuration
+---
 
-### Cypress Configuration
+## 📜 Scripts Reference
 
-Edit `cypress.config.ts` to customize:
-- `defaultCommandTimeout` - Command timeout duration
-- `specPattern` - Test file patterns
-- `video` - Video recording on/off
-- `viewportWidth/Height` - Browser viewport size
-
-### Playwright Configuration
-
-Edit `playwright/playwright.config.ts` to customize:
-- `projects` - Browser configurations (Chromium, Firefox, WebKit)
-- `testDir` - Test directory location
-- `testIdAttribute` - Custom test ID attribute selector
-- `timeout` - Test timeout duration
-- `use.trace` - Trace collection settings
-
-### Allure Configuration
-
-Allure settings in `cypress.config.ts`:
-- `allureReuseAfterSpec` - Reuse report between specs
-- `resultsDir` - Where to store results
-
-## 📊 Viewing Reports
-
-### Local Allure Report
-
-```bash
-npm run allure:report
-```
-
-### GitHub Pages (after CI runs)
-
-Visit: `https://<username>.github.io/<repo-name>/allure-report`
-
-## 🛠 Development
-
-### Adding New Tests
-
-#### Cypress Tests
-
-1. Create a new spec file in `cypress/e2e/`
-2. Use shared page objects from `page-objects/`
-3. Use page actions from `cypress/page-actions/`
-4. Run tests with `npm run test:allure`
-
-#### Playwright Tests
-
-1. Create a new spec file in `playwright/tests/`
-2. Use shared page objects from `page-objects/`
-3. Use page actions from `playwright/page-actions/`
-4. Run tests with `npm run playwright:test`
-
-### Test Naming Convention
-
-```typescript
-describe('Feature - Specific Functionality', () => {
-  it('should [action] when [condition]', () => {
-    // test implementation
-  });
-});
-```
-
-## 📝 Scripts Reference
+`<framework>` = `cypress` | `playwright`
 
 | Script | Description |
 |--------|-------------|
-| `npm run allure:clean` | Clean previous results |
-| `npm run allure:report` | Generate and open Allure report |
-| `npm run browser:chrome` | Run Cypress tests in headed Chrome |
-| `npm run jira:create-bugs` | Create Jira bugs from failures |
-| `npm run jira:dry-run` | Test Jira integration without creating issues |
-| `npm run playwright:test` | Run Playwright tests |
-| `npm run playwright:ui` | Run Playwright with interactive UI |
-| `npm run test:allure` | Run Cypress tests with Allure reporting |
-| `npm run test:ci` | Full CI pipeline (clean, test, create bugs) |
+| `npm run <framework>:allure` | Run framework tests and open report |
+| `npm run <framework>:install` | Install framework dependencies |
+| `npm run <framework>:test` | Run framework tests |
+| `npm run <framework>:verify` | Verify framework installation |
+| `npm run allure` | Allure CLI entry point |
+| `npm run allure:clean` | Remove all results and reports |
+| `npm run allure:clean:old` | Remove results older than 30 days |
+| `npm run allure:generate` | Generate HTML report from results |
+| `npm run allure:open` | Open the generated report |
+| `npm run jira:create-bugs` | Create Jira issues from failures |
+| `npm run jira:dry-run` | Preview Jira integration (no creation) |
+| `npm run prettier:fix` | Format code with Prettier |
+| `npm run test:ci` | CI pipeline: clean, test, create bugs |
+| `npm run typecheck` | TypeScript type checking |
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests locally
-5. Submit a pull request
+---
 
 ## 📄 License
 

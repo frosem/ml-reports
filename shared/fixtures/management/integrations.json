@@ -1,0 +1,7 @@
+{
+  "links": {
+    "jira": "https://ml-reports.atlassian.net/browse/%s",
+    "qase": "https://app.qase.io/case/%s"
+  }
+}
+
