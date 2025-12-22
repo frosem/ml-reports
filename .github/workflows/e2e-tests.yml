@@ -150,15 +150,15 @@ jobs:
           SANITIZED_BRANCH="${{ steps.sanitize.outputs.branch }}"
           FRAMEWORK="${{ inputs.framework }}"
           mkdir -p deploy-package
-          
+
           # Copy individual run report (branch/framework/run_id)
           mkdir -p "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/${{ env.RUN_ID }}"
           cp -r "allure-report/${FRAMEWORK}"/* "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/${{ env.RUN_ID }}/"
-          
+
           # Copy history to framework level for next run (branch/framework/history)
           mkdir -p "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/history"
           cp -r "allure-report/${FRAMEWORK}/history"/* "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/history/" 2>/dev/null || true
-          
+
           echo "Deployment structure:"
           ls -la "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/"
 

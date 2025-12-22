@@ -11,8 +11,6 @@
  *   open      <framework> - Open the generated report
  *
  * Frameworks: cypress, playwright
- *
- * Pattern: Command Pattern for each operation
  */
 import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync } from 'node:fs';
 import { execSync } from 'node:child_process';
@@ -86,7 +84,6 @@ class CleanOldCommand implements Command {
 
   execute(): void {
     const frameworks = this.framework ? [this.framework] : FRAMEWORKS;
-    
     for (const fw of frameworks) {
       const resultsDir = getResultsDir(fw);
       const cutoffDate = new Date();
@@ -196,14 +193,14 @@ function main(): void {
     console.log('  history   <framework> - Copy history from previous report');
     console.log('  open      <framework> - Open the generated report');
     console.log('');
-    console.log('Frameworks: cypress, playwright');
+    console.log(`Frameworks: ${FRAMEWORKS.join(', ')}`);
     process.exit(command ? 1 : 0);
   }
 
   // Check if framework is required
   if (FRAMEWORK_REQUIRED.includes(command) && !framework) {
     console.error(`Error: "${command}" requires a framework argument.`);
-    console.error(`Usage: npx tsx scripts/allure-cli.ts ${command} <cypress|playwright>`);
+    console.error(`Usage: npx tsx scripts/allure-cli.ts ${command} <${FRAMEWORKS.join('|')}>`);
     process.exit(1);
   }
 
