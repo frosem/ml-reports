@@ -1,15 +1,12 @@
 import { defineConfig } from "cypress";
-import allureWriter from "@shelex/cypress-allure-plugin/writer";
 import { allureCypress } from "allure-cypress/reporter";
+import { getAllureConfig } from "@shared/config/allure.config";
 
 export default defineConfig({
   e2e: {
     specPattern: 'cypress/e2e/**/*.specs.ts',
     setupNodeEvents(on, config) {
-      allureWriter(on, config);
-      allureCypress(on, {
-        resultsDir: "allure-results"
-      });
+      allureCypress(on, config, getAllureConfig('cypress'));
       return config;
     },
   },
@@ -22,7 +19,6 @@ export default defineConfig({
   defaultCommandTimeout: 35000,
   experimentalMemoryManagement: true,
   env: {
-    allureReuseAfterSpec: true,
-    grepFilterSpecs: true
+    grepFilterSpecs: true,
   }
 });
