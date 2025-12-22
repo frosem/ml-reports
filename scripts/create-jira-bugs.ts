@@ -159,7 +159,7 @@ const config: JiraConfig = {
     jiraPriority: process.env.JIRA_PRIORITY || 'High',
     jiraProjectKey: process.env.JIRA_PROJECT_KEY || '',
     jiraUserEmail: process.env.JIRA_USER_EMAIL || '',
-    labels: (process.env.JIRA_LABELS || 'automated-test-failure,cypress').split(',').map(l => l.trim())
+    labels: (process.env.JIRA_LABELS || 'automated-test-failure').split(',').map(l => l.trim())
 };
 
 // ============================================================================

@@ -3,14 +3,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
 
   "allure": {
-    "resultsDir": "./allure-results"
+    "resultsDir": "./allure-results/framework"
   },
 
   "jira": {
     "apiToken": "your-api-token-here",
     "baseUrl": "https://your-domain.atlassian.net",
     "issueType": "Bug",
-    "labels": ["automated-test-failure", "cypress"],
+    "labels": ["automated-test-failure"],
     "priority": "High",
     "projectKey": "TEST",
     "userEmail": "your-email@example.com"
