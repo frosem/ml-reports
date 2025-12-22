@@ -1,4 +1,4 @@
-import { description, epic, feature, parentSuite, Severity, severity, story, suite } from 'allure-js-commons';
+import { description, epic, feature, Severity, severity, story } from 'allure-js-commons';
 import { storyLink, testLink } from '@cypress-support/AllureTools';
 import { InventoryPageActions } from '@cypress-page-actions/InventoryPageActions';
 import { LoginPageActions } from '@cypress-page-actions/LoginPageActions';
