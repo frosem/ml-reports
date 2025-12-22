@@ -1,0 +1,198 @@
+name: Allure Reports and Bug Reporting integration
+
+on:
+  workflow_dispatch:
+    inputs:
+      framework:
+        description: 'Test framework to run'
+        required: true
+        default: 'playwright'
+        type: choice
+        options:
+          - cypress
+          - playwright
+
+# Required permissions for deploying to GitHub Pages
+permissions:
+  contents: write
+
+env:
+  BRANCH_NAME: ${{ github.ref_name }}
+  FRAMEWORK: ${{ inputs.framework }}
+  RUN_ID: ${{ github.run_id }}
+
+jobs:
+  setup:
+    name: Setup Configuration
+    runs-on: ubuntu-latest
+    outputs:
+      node-version: ${{ steps.get-node-version.outputs.node_version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get Node version from package.json
+        id: get-node-version
+        run: |
+          set -e
+          if [ ! -f package.json ]; then
+            echo "Error: package.json file not found"
+            exit 1
+          fi
+          NODE_VERSION=$(jq -r '.engines.node' package.json)
+          if [ -z "$NODE_VERSION" ] || [ "$NODE_VERSION" = "null" ]; then
+            echo "Error: engines.node not found in package.json"
+            exit 1
+          fi
+          echo "node_version=$NODE_VERSION" >> $GITHUB_OUTPUT
+          echo "Detected Node version: $NODE_VERSION"
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+    needs: [setup]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ needs.setup.outputs.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Playwright: Install browsers
+      - name: Install Playwright browsers
+        if: ${{ inputs.framework == 'playwright' }}
+        run: npx playwright install --with-deps chromium
+
+      # Run tests and generate Allure results
+      - name: Run ${{ inputs.framework }} tests with Allure Reports
+        id: tests
+        continue-on-error: true
+        run: npm run ${{ inputs.framework }}:test
+
+      # Checkout gh-pages to get previous report history
+      - name: Get previous Allure results history
+        uses: actions/checkout@v4
+        if: always()
+        continue-on-error: true
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      # Copy previous history to allure-results
+      - name: Copy previous history
+        if: always()
+        run: |
+          SANITIZED_BRANCH=$(echo "${{ env.BRANCH_NAME }}" | sed 's/\//-/g')
+          FRAMEWORK="${{ inputs.framework }}"
+          HISTORY_DIR="gh-pages/allure-report/${SANITIZED_BRANCH}/${FRAMEWORK}/history"
+          if [ -d "$HISTORY_DIR" ]; then
+            mkdir -p "allure-results/${FRAMEWORK}/history"
+            cp -r "$HISTORY_DIR"/* "allure-results/${FRAMEWORK}/history/" 2>/dev/null || true
+            echo "Copied ${FRAMEWORK} history from previous report"
+          else
+            echo "No previous ${FRAMEWORK} history found"
+          fi
+
+      # Generate Allure report with history
+      - name: Generate Allure Report
+        if: always()
+        run: npm run allure:generate -- ${{ inputs.framework }}
+
+      # Upload Allure results as artifacts for debugging
+      - name: Upload Allure Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-${{ inputs.framework }}
+          path: allure-results/${{ inputs.framework }}/
+          retention-days: 30
+
+      # Upload Allure report as artifacts for download
+      - name: Upload Allure Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report-${{ inputs.framework }}
+          path: allure-report/${{ inputs.framework }}/
+          retention-days: 30
+
+      # Create bug reports in Jira for any test failures
+      - name: Create bug reports in Jira for test failures
+        if: failure() || steps.tests.outcome == 'failure'
+        env:
+          ALLURE_RESULTS_DIR: ./allure-results/${{ inputs.framework }}
+          GITHUB_BRANCH: ${{ github.ref_name }}
+          GITHUB_COMMIT_SHA: ${{ github.sha }}
+          GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+        run: npm run jira:create-bugs
+
+      # Sanitize branch name for use as directory (replace / with -)
+      - name: Sanitize branch name
+        id: sanitize
+        run: |
+          SANITIZED_BRANCH=$(echo "${{ env.BRANCH_NAME }}" | sed 's/\//-/g')
+          echo "branch=$SANITIZED_BRANCH" >> $GITHUB_OUTPUT
+
+      # Prepare combined deployment (report + history at branch/framework)
+      - name: Prepare deployment structure
+        if: always()
+        run: |
+          SANITIZED_BRANCH="${{ steps.sanitize.outputs.branch }}"
+          FRAMEWORK="${{ inputs.framework }}"
+          mkdir -p deploy-package
+          
+          # Copy individual run report (branch/framework/run_id)
+          mkdir -p "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/${{ env.RUN_ID }}"
+          cp -r "allure-report/${FRAMEWORK}"/* "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/${{ env.RUN_ID }}/"
+          
+          # Copy history to framework level for next run (branch/framework/history)
+          mkdir -p "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/history"
+          cp -r "allure-report/${FRAMEWORK}/history"/* "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/history/" 2>/dev/null || true
+          
+          echo "Deployment structure:"
+          ls -la "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/"
+
+      # Single deploy to avoid race conditions
+      - name: Deploy to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          destination_dir: allure-report
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          keep_files: true
+          publish_dir: ./deploy-package
+
+      # Add test results summary to GitHub Actions summary page
+      - name: Test Results Summary
+        if: always()
+        run: |
+          SANITIZED_BRANCH=$(echo "${{ env.BRANCH_NAME }}" | sed 's/\//-/g')
+          echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Framework:** \`${{ inputs.framework }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Branch:** \`${{ env.BRANCH_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Run ID:** \`${{ env.RUN_ID }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.tests.outcome }}" == "success" ]; then
+            echo "✅ All tests passed!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Some tests failed. Check Allure report for details." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "📋 Jira bugs have been created for failed tests." >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 <a href=\"https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/allure-report/${SANITIZED_BRANCH}/${{ inputs.framework }}/${{ env.RUN_ID }}\" target=\"_blank\">View Allure Report for this run</a>" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📂 <a href=\"https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/allure-report/${SANITIZED_BRANCH}/${{ inputs.framework }}\" target=\"_blank\">View all ${{ inputs.framework }} reports for this branch</a>" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📁 <a href=\"https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/allure-report/\" target=\"_blank\">View all branch reports</a>" >> $GITHUB_STEP_SUMMARY

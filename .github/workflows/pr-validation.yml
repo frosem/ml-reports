@@ -1,4 +1,4 @@
-name: PR Validation
+name: PR validation checks
 
 on:
   pull_request:
@@ -88,7 +88,7 @@ jobs:
       # Validate TypeScript code for type errors without emitting output files
       # This catches type-related issues early in the PR process
       - name: Type check
-        run: ./node_modules/.bin/tsc --noEmit
+        run: npm run typecheck
 
   indentation-check:
     name: Check Indentation
@@ -131,10 +131,24 @@ jobs:
             --exclude "cypress/videos" \
             --exclude "cypress/screenshots"
 
-  cypress-verify:
-    name: Validate Cypress Config
+  framework-verification:
+    name: Validate ${{ matrix.framework }} Config
     runs-on: ubuntu-latest
     needs: [setup, node-build]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - framework: Cypress
+            cache-path: |
+              node_modules/
+              ~/.cache/Cypress
+            install-cmd: npm run cypress:install
+            verify-cmd: npm run cypress:verify
+          - framework: Playwright
+            cache-path: node_modules/
+            install-cmd: npm run playwright:install
+            verify-cmd: npm run playwright:verify
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -146,32 +160,28 @@ jobs:
           cache: 'npm'
 
       # Restore cached dependencies from the build job
-      - name: node_modules and Cypress cache
+      - name: Restore cache
         uses: actions/cache@v4
         with:
-          path: |
-            node_modules/
-            ~/.cache/Cypress
+          path: ${{ matrix.cache-path }}
           key: ${{ runner.os }}-node-cypress-${{ hashFiles('package-lock.json') }}
 
       # Install dependencies if cache miss (fallback)
       - name: Install dependencies (if cache miss)
         run: npm ci --prefer-offline --no-audit
 
-      # Ensure Cypress binary is installed in the cache directory
-      # This is necessary because Cypress requires a separate binary installation
-      - name: Ensure Cypress binary exists
-        run: ./node_modules/.bin/cypress install
+      # Install framework binaries (Cypress binary or Playwright browsers)
+      - name: Install ${{ matrix.framework }} binaries
+        run: ${{ matrix.install-cmd }}
 
-      # Verify that Cypress is properly installed and can run
-      # This catches configuration or installation issues before running actual tests
-      - name: Verify Cypress
-        run: ./node_modules/.bin/cypress verify
+      # Verify framework configuration is valid
+      - name: Verify ${{ matrix.framework }}
+        run: ${{ matrix.verify-cmd }}
 
   pr-summary:
     name: PR Summary
     runs-on: ubuntu-latest
-    needs: [cypress-verify, indentation-check, type-check]
+    needs: [framework-verification, indentation-check, type-check]
     if: always()
     steps:
       # Generate a summary of all validation checks for easy PR review
@@ -191,10 +201,10 @@ jobs:
           else
             echo "❌ TypeScript type check failed" >> $GITHUB_STEP_SUMMARY
           fi
-          if [ "${{ needs.cypress-verify.result }}" == "success" ]; then
-            echo "✅ Cypress configuration valid" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ needs.framework-verification.result }}" == "success" ]; then
+            echo "✅ E2E framework configs valid (Cypress + Playwright)" >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ Cypress configuration invalid" >> $GITHUB_STEP_SUMMARY
+            echo "❌ E2E framework config validation failed" >> $GITHUB_STEP_SUMMARY
           fi
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "💡 Run the full test suite manually via **Actions → Cypress Tests → Run workflow**" >> $GITHUB_STEP_SUMMARY
+          echo "💡 Run the full test suite manually via **Actions → E2E Tests → Run workflow**" >> $GITHUB_STEP_SUMMARY
