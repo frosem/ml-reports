@@ -1,8 +1,9 @@
 /**
- * Cart Page Actions for Playwright
+ * Cart Page Actions
  * Application actions for the Cart page using CartPageObjects
  */
-import { type Page, expect } from '@playwright/test';
+import { type Page } from '@playwright/test';
+import { allureStep, allureExpect } from '@playwright-support/AllureTools';
 import { cartPageObjects } from '@page-objects/CartPageObjects';
 import urls from '@fixtures/urls.json';
 
@@ -16,15 +17,17 @@ export class CartPageActions {
   /**
    * Verify user is on the cart page
    */
+  @allureStep()
   async verifyOnCartPage(): Promise<void> {
-    await expect(this.page).toHaveURL(new RegExp(urls.paths.cart));
-    await expect(this.page.getByTestId(cartPageObjects.cartItemsContainerTestId).first()).toBeVisible();
+    await allureExpect(this.page).toHaveURL(new RegExp(urls.paths.cart));
+    await allureExpect(this.page.getByTestId(cartPageObjects.cartItemsContainerTestId).first()).toBeVisible();
   }
 
   /**
    * Get the number of items in the cart
-   * @returns The count
+   * @returns items count number
    */
+  @allureStep()
   async getCartItemCount(): Promise<number> {
     return await this.page.getByTestId(cartPageObjects.cartItemsContainerTestId).count();
   }
@@ -33,22 +36,25 @@ export class CartPageActions {
    * Verify cart contains the expected number of items
    * @param expectedCount - The expected number of items
    */
+  @allureStep('Verify cart item count: {0}')
   async verifyCartItemCount(expectedCount: number): Promise<void> {
-    await expect(this.page.getByTestId(cartPageObjects.cartItemsContainerTestId)).toHaveCount(expectedCount);
+    await allureExpect(this.page.getByTestId(cartPageObjects.cartItemsContainerTestId)).toHaveCount(expectedCount);
   }
 
   /**
    * Verify cart contains an item with the specified name
    * @param itemName - The name of the item to verify
    */
+  @allureStep('Verify cart contains: {0}')
   async verifyCartContainsItem(itemName: string): Promise<void> {
-    await expect(this.page.getByTestId(cartPageObjects.cartItemNameContainerTestId)).toContainText(itemName);
+    await allureExpect(this.page.getByTestId(cartPageObjects.cartItemNameContainerTestId)).toContainText(itemName);
   }
 
   /**
    * Get the name of the first cart item
-   * @returns The item name
+   * @returns the item name
    */
+  @allureStep()
   async getFirstCartItemName(): Promise<string> {
     const text = await this.page
       .getByTestId(cartPageObjects.cartItemNameContainerTestId)
@@ -61,6 +67,7 @@ export class CartPageActions {
    * Get the price of the first cart item
    * @returns The item price
    */
+  @allureStep()
   async getFirstCartItemPrice(): Promise<string> {
     const text = await this.page
       .getByTestId(cartPageObjects.cartItemPriceContainerTestId)
@@ -73,17 +80,19 @@ export class CartPageActions {
    * Verify the first cart item has the expected price
    * @param expectedPrice - The expected price text
    */
+  @allureStep('Verify first cart item price: {0}')
   async verifyFirstCartItemPrice(expectedPrice: string): Promise<void> {
-    await expect(
+    await allureExpect(
       this.page.getByTestId(cartPageObjects.cartItemPriceContainerTestId).first()
     ).toContainText(expectedPrice);
   }
 
   /**
    * Remove item from cart by index
-   * @param index - The index of the item to remove (0-based)
+   * @param index - The index of the item to remove
    */
-  async removeItemByIndex(index: number): Promise<void> {
+  @allureStep('Remove item by index: {0}')
+  async removeItemButtonByIndex(index: number): Promise<void> {
     await this.page
       .getByTestId(cartPageObjects.cartItemsContainerTestId)
       .nth(index)
@@ -94,21 +103,24 @@ export class CartPageActions {
   /**
    * Click continue shopping button
    */
-  async clickContinueShopping(): Promise<void> {
+  @allureStep()
+  async clickOnContinueShoppingButton(): Promise<void> {
     await this.page.getByTestId(cartPageObjects.continueShoppingButtonTestId).click();
   }
 
   /**
    * Click checkout button
    */
-  async clickCheckout(): Promise<void> {
+  @allureStep()
+  async clickOnCheckoutButton(): Promise<void> {
     await this.page.getByTestId(cartPageObjects.checkoutButtonTestId).click();
   }
 
   /**
    * Verify cart is empty
    */
+  @allureStep()
   async verifyCartIsEmpty(): Promise<void> {
-    await expect(this.page.getByTestId(cartPageObjects.cartItemsContainerTestId)).toHaveCount(0);
+    await allureExpect(this.page.getByTestId(cartPageObjects.cartItemsContainerTestId)).toHaveCount(0);
   }
 }
