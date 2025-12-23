@@ -10,14 +10,14 @@
     "moduleResolution": "Bundler",
     "noEmit": true,
     "paths": {
-        "@cypress-page-actions/*": ["cypress/page-actions/*"],
-        "@cypress-support/*": ["cypress/support/*"],
-        "@fixtures/*": ["shared/fixtures/*"],
-        "@page-objects/*": ["shared/page-objects/*"],
-        "@playwright-page-actions/*": ["playwright/page-actions/*"],
-        "@playwright-support/*": ["playwright/support/*"],
-        "@shared/allure/*": ["shared/allure/*"],
-        "@shared/*": ["shared/*"]
+      "@cypress-page-actions/*": ["cypress/page-actions/*"],
+      "@cypress-support/*": ["cypress/support/*"],
+      "@fixtures/*": ["shared/fixtures/*"],
+      "@jira/*": ["jira/*"],
+      "@page-objects/*": ["shared/page-objects/*"],
+      "@playwright-page-actions/*": ["playwright/page-actions/*"],
+      "@playwright-support/*": ["playwright/support/*"],
+      "@shared/*": ["shared/*"]
     },
     "resolveJsonModule": true,
     "skipLibCheck": true,
