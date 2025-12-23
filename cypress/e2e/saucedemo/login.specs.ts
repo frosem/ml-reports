@@ -1,5 +1,5 @@
-import { description, epic, feature, Severity, severity, story } from 'allure-js-commons';
 import { storyLink, testLink } from '@cypress-support/AllureTools';
+import { description, epic, feature, Severity, severity, story } from 'allure-js-commons';
 import { InventoryPageActions } from '@cypress-page-actions/InventoryPageActions';
 import { LoginPageActions } from '@cypress-page-actions/LoginPageActions';
 import allure from '@fixtures/management/allure-metadata.json';
