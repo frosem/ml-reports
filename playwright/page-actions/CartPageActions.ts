@@ -3,7 +3,7 @@
  * Application actions for the Cart page using CartPageObjects
  */
 import { type Page } from '@playwright/test';
-import { allureStep, allureExpect } from '@playwright-support/AllureTools';
+import { allureStep, expect } from '@playwright-support/AllureTools';
 import { cartPageObjects } from '@page-objects/CartPageObjects';
 import urls from '@fixtures/urls.json';
 
@@ -19,8 +19,8 @@ export class CartPageActions {
    */
   @allureStep()
   async verifyOnCartPage(): Promise<void> {
-    await allureExpect(this.page).toHaveURL(new RegExp(urls.paths.cart));
-    await allureExpect(this.page.getByTestId(cartPageObjects.cartItemsContainerTestId).first()).toBeVisible();
+    await expect(this.page).toHaveURL(new RegExp(urls.paths.cart));
+    await expect(this.page.getByTestId(cartPageObjects.cartItemsContainerTestId).first()).toBeVisible();
   }
 
   /**
@@ -38,7 +38,7 @@ export class CartPageActions {
    */
   @allureStep('Verify cart item count: {0}')
   async verifyCartItemCount(expectedCount: number): Promise<void> {
-    await allureExpect(this.page.getByTestId(cartPageObjects.cartItemsContainerTestId)).toHaveCount(expectedCount);
+    await expect(this.page.getByTestId(cartPageObjects.cartItemsContainerTestId)).toHaveCount(expectedCount);
   }
 
   /**
@@ -47,7 +47,7 @@ export class CartPageActions {
    */
   @allureStep('Verify cart contains: {0}')
   async verifyCartContainsItem(itemName: string): Promise<void> {
-    await allureExpect(this.page.getByTestId(cartPageObjects.cartItemNameContainerTestId)).toContainText(itemName);
+    await expect(this.page.getByTestId(cartPageObjects.cartItemNameContainerTestId)).toContainText(itemName);
   }
 
   /**
@@ -82,7 +82,7 @@ export class CartPageActions {
    */
   @allureStep('Verify first cart item price: {0}')
   async verifyFirstCartItemPrice(expectedPrice: string): Promise<void> {
-    await allureExpect(
+    await expect(
       this.page.getByTestId(cartPageObjects.cartItemPriceContainerTestId).first()
     ).toContainText(expectedPrice);
   }
@@ -121,6 +121,6 @@ export class CartPageActions {
    */
   @allureStep()
   async verifyCartIsEmpty(): Promise<void> {
-    await allureExpect(this.page.getByTestId(cartPageObjects.cartItemsContainerTestId)).toHaveCount(0);
+    await expect(this.page.getByTestId(cartPageObjects.cartItemsContainerTestId)).toHaveCount(0);
   }
 }

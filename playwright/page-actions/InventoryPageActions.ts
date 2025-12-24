@@ -3,7 +3,7 @@
  * Application actions for the Inventory page using InventoryPageObjects
  */
 import { type Page } from '@playwright/test';
-import { allureStep, allureExpect, attachAssertion } from '@playwright-support/AllureTools';
+import { allureStep, attachAssertion, expect } from '@playwright-support/AllureTools';
 import { inventoryPageObjects } from '@page-objects/InventoryPageObjects';
 import urls from '@fixtures/urls.json';
 
@@ -22,10 +22,10 @@ export class InventoryPageActions {
     const expectedUrl = `${urls.baseUrl}${urls.paths.inventory}`;
     const actualUrl = this.page.url();
     await attachAssertion(expectedUrl, actualUrl);
-    await allureExpect(this.page, { errorMessage: `Should be on inventory page but got: ${actualUrl}` }).toHaveURL(expectedUrl);
+    await expect(this.page, { errorMessage: `Should be on inventory page but got: ${actualUrl}` }).toHaveURL(expectedUrl);
 
     const itemCount = await this.page.getByTestId(inventoryPageObjects.inventoryItemContainerTestId).count();
-    await allureExpect(itemCount, { label: 'product items', errorMessage: 'Inventory should have at least one item' }).toBeGreaterThan(0);
+    await expect(itemCount, { label: 'product items', errorMessage: 'Inventory should have at least one item' }).toBeGreaterThan(0);
   }
 
   /**
@@ -95,8 +95,8 @@ export class InventoryPageActions {
   @allureStep('Verify cart badge count: {0}')
   async verifyCartBadgeCount(expectedCount: number): Promise<void> {
     const badge = this.page.getByTestId(inventoryPageObjects.cartBadgeSpanTestId);
-    await allureExpect(badge).toBeVisible();
-    await allureExpect(badge, `Cart badge should show ${expectedCount} item(s)`).toContainText(expectedCount.toString());
+    await expect(badge).toBeVisible();
+    await expect(badge, `Cart badge should show ${expectedCount} item(s)`).toContainText(expectedCount.toString());
   }
 
   /**
@@ -104,7 +104,7 @@ export class InventoryPageActions {
    */
   @allureStep()
   async verifyCartBadgeIsNotVisible(): Promise<void> {
-    await allureExpect(
+    await expect(
       this.page.getByTestId(inventoryPageObjects.cartBadgeSpanTestId)
     ).not.toBeVisible();
   }
