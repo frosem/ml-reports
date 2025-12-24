@@ -59,43 +59,75 @@ export abstract class BaseAllureTools {
 }
 
 /**
- * Formats camelCase method name to readable format.
- * e.g., "toContainText" → "to contain text"
- * e.g., "not.toBeVisible" → "not to be visible"
+ * All the pieces needed to build a human readable assertion message.
+ *
+ * @example
+ * {
+ *   actual: 'Add to cart',
+ *   expected: 'Remove',
+ *   method: 'toContainText',
+ *   modifier: 'soft',
+ *   negated: true,
+ *   status: Status.FAILED
+ * }
+ * // Produces: "Failed soft 'Add to cart' to not contain text 'Remove'"
  */
-function formatAssertionMethod(method: string): string {
-  return method
+export interface AssertionContext {
+  actual: string | null;
+  expected?: string;
+  label?: string;
+  method: string;
+  modifier?: string;
+  negated?: boolean;
+  status: Status;
+}
+
+/**
+ * Creates a readable message from assertion context.
+ *
+ * @example
+ * buildAssertionMessage({ status: Status.PASSED, method: 'toBeVisible', actual: 'Login' })
+ * // Returns: "Passed 'Login' to be visible"
+ *
+ * buildAssertionMessage({ status: Status.FAILED, method: 'toContainText', actual: 'Hello', expected: 'World', modifier: 'soft' })
+ * // Returns: "Failed soft 'Hello' to contain text 'World'"
+ */
+export function buildAssertionMessage(ctx: AssertionContext): string {
+  const status = ctx.status.charAt(0).toUpperCase() + ctx.status.slice(1);
+  const actual = quoteValue(ctx.actual ?? 'element');
+  const method = formatMethod(ctx.method, ctx.negated);
+  const expected = ctx.expected ? quoteValue(ctx.expected) : '';
+  return [status, ctx.modifier, actual, ctx.label, method, expected].filter(Boolean).join(' ');
+}
+
+/**
+ * Turns method names like "toContainText" into "to contain text".
+ * When negated, produces "to not contain text" instead of "not to contain text".
+ *
+ * @example
+ * formatMethod('toBeVisible')           // "to be visible"
+ * formatMethod('toContainText', true)   // "to not contain text"
+ * formatMethod('toHaveCount', false)    // "to have count"
+ */
+function formatMethod(method: string, negated?: boolean): string {
+  const formatted = method
     .replace(/([a-z])([A-Z])/g, '$1 $2')
     .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
     .toLowerCase()
     .trim();
+  return negated ? formatted.replace(/^to /, 'to not ') : formatted;
 }
 
 /**
- * Wraps value in single quotes, normalizing any existing quotes.
+ * Wraps a value in single quotes for display.
+ * Removes existing quotes to avoid double quoting.
+ *
+ * @example
+ * quoteValue('hello')    // "'hello'"
+ * quoteValue('"hello"')  // "'hello'"
  */
 function quoteValue(value: string): string {
   if (!value) return '';
-  // Strip matching quote pairs (single or double) from start and end
-  const stripped = value.replace(/^(["'])(.*)\1$/, '$2');
-  return `'${stripped}'`;
-}
-
-/**
- * Builds an assertion message based on status.
- */
-export function buildAssertionMessage(
-  status: Status,
-  method: string,
-  actualValue: string | null,
-  args: unknown[],
-  label: string = ''
-): string {
-  const prefix = (status.charAt(0).toUpperCase() + status.slice(1)).trim();
-  const actual = quoteValue(actualValue ?? 'element');
-  const expected = quoteValue(args.length > 0 ? String(args[0]).trim() : '');
-  const formattedMethod = formatAssertionMethod(method);
-  const suffix = label ? ` ${label}` : '';
-  return `${prefix} ${actual}${suffix} ${formattedMethod} ${expected}${suffix}`;
+  return `'${value.replace(/^(["'])(.*)\1$/, '$2')}'`;
 }
 

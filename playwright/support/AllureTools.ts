@@ -1,6 +1,6 @@
-import { expect } from '@playwright/test';
+import { expect as playwrightExpect, test } from '@playwright/test';
 import { attachment, ContentType, link, logStep, Status, step, testCaseId } from 'allure-js-commons';
-import { BaseAllureTools, buildAssertionMessage } from '@shared/allure/BaseAllureTools';
+import { type AssertionContext, BaseAllureTools, buildAssertionMessage } from '@shared/allure/BaseAllureTools';
 export { allureStep } from '@shared/allure/AllureStepDecorator';
 
 class AllureTools extends BaseAllureTools {
@@ -27,63 +27,122 @@ export const attachAssertion = allureTools.attachAssertion.bind(allureTools);
 export const storyLink = allureTools.storyLink.bind(allureTools);
 export const testLink = allureTools.testLink.bind(allureTools);
 
-interface AllureExpectOptions {
-  /** Label describing the value being asserted */
-  label?: string;
-  /** Error message shown on failure */
+export interface ExpectOptions {
   errorMessage?: string;
+  label?: string;
+  soft?: boolean;
 }
 
 /**
  * Wraps Playwright's expect with Allure step logging and simplified error messages.
  * @param actual - The locator, page, or value to assert on
- * @param message - Optional custom message for the step/error
+ * @param options - Optional custom message for the step/error
  */
-export function allureExpect<T>(actual: T, options?: AllureExpectOptions | string) {
-  const opts: AllureExpectOptions = typeof options === 'string'
+function expectFn<T>(actual: T, options?: ExpectOptions | string) {
+  const opts: ExpectOptions = typeof options === 'string'
     ? { errorMessage: options }
     : options ?? {};
-  return wrapExpect(expect(actual), actual, opts);
+  return wrapExpect(playwrightExpect(actual), actual, opts);
+}
+
+// Copy all properties from Playwright's expect
+for (const key of Object.keys(playwrightExpect) as Array<keyof typeof playwrightExpect>) {
+  (expectFn as unknown as Record<string, unknown>)[key] = playwrightExpect[key];
+}
+
+// Override soft to wrap with Allure logging
+expectFn.soft = <T>(actual: T, options?: ExpectOptions | string) => {
+  const opts: ExpectOptions = typeof options === 'string'
+    ? { errorMessage: options, soft: true }
+    : { ...options, soft: true };
+  return wrapExpect(playwrightExpect.soft(actual), actual, opts);
+};
+
+export const expect = expectFn as typeof playwrightExpect & {
+  <T>(actual: T, options?: ExpectOptions | string): ReturnType<typeof playwrightExpect<T>>;
+  soft: <T>(actual: T, options?: ExpectOptions | string) => ReturnType<typeof playwrightExpect<T>>;
+};
+
+/**
+ * Gets the count of soft assertion errors from Playwright's test info.
+ */
+function getSoftErrorCount(): number {
+  try {
+    const info = test.info();
+    return info.errors.length;
+  } catch {
+    return 0;
+  }
 }
 
 /**
  * Creates a proxy around Playwright's expect to intercept assertion calls.
  * Logs successful assertions as Allure steps and uses custom message only on failure.
  */
-function wrapExpect<T extends object>(expectation: T, original: unknown, options: AllureExpectOptions): T {
-  const createProxy = (target: object, methodPrefix: string): T =>
+function wrapExpect<T extends object>(expectation: T, original: unknown, options: ExpectOptions): T {
+  const createProxy = (target: object, negated: boolean): T =>
     new Proxy(target, {
       get(t, prop) {
         const value = t[prop as keyof typeof t];
 
-        // Wrap assertion methods to add logging
-        if (typeof value === 'function') {
+        // Only wrap assertion methods (start with 'to'), pass through asymmetric matchers
+        const propName = String(prop);
+        const isAssertion = typeof value === 'function' && propName.startsWith('to');
+
+        if (isAssertion) {
           return async (...args: unknown[]) => {
-            const methodName = `${methodPrefix}${String(prop)}`;
             const actualValue = await extractValueFromOriginal(original);
+            const errorCountBefore = getSoftErrorCount();
+
+            const ctx: AssertionContext = {
+              actual: actualValue,
+              expected: args.length > 0 ? String(args[0]).trim() : undefined,
+              label: options.label,
+              method: propName,
+              modifier: options.soft ? 'soft' : undefined,
+              negated,
+              status: Status.PASSED,
+            };
+
             try {
               const result = await (value as (...a: unknown[]) => Promise<void>).apply(t, args);
-              // On step success: auto-generate step name
-              await logAssertion(methodName, args, undefined, actualValue, options.label);
+              const errorCountAfter = getSoftErrorCount();
+
+              if (errorCountAfter > errorCountBefore) {
+                // Soft assertion failed (didn't throw but added error)
+                const failureMessage = options.errorMessage ?? buildAssertionMessage({ ...ctx, status: Status.FAILED });
+                await Promise.resolve(step(failureMessage, () => { throw new Error(failureMessage); })).catch(() => {});
+                const errors = test.info().errors;
+                if (errors.length > 0) {
+                  errors[errors.length - 1].message = failureMessage;
+                }
+              } else {
+                // Assertion passed
+                await step(buildAssertionMessage(ctx), async () => {});
+              }
               return result;
-            } catch {
-              // On step failure: use custom message
-              const failureMessage = options.errorMessage ?? buildAssertionMessage(Status.FAILED, methodName, actualValue, args, options.label);
-              throw new Error(failureMessage);
+            } catch (error) {
+              // Regular assertion failed (threw error)
+              const failureMessage = options.errorMessage ?? buildAssertionMessage({ ...ctx, status: Status.FAILED });
+              await Promise.resolve(step(failureMessage, () => { throw new Error(failureMessage); })).catch(() => {});
+              if (error instanceof Error) {
+                error.message = failureMessage;
+              }
+              throw error;
             }
           };
         }
 
         // Recursively wrap chained properties like .not
         if (value !== null && typeof value === 'object') {
-          return createProxy(value, prop === 'not' ? 'not ' : methodPrefix);
+          return createProxy(value, prop === 'not');
         }
 
         return value;
       },
     }) as T;
 
-  return createProxy(expectation, '');
+  return createProxy(expectation, false);
 }
 
 /**
@@ -134,19 +193,5 @@ async function extractValueFromOriginal(original: unknown): Promise<string | nul
   }
 
   return null;
-}
-
-/**
- * Logs an assertion step in Allure.
- */
-async function logAssertion(
-  method: string,
-  args: unknown[],
-  message?: string,
-  actualValue?: string | null,
-  label?: string
-): Promise<void> {
-  const stepMessage = message ?? buildAssertionMessage(Status.PASSED, method, actualValue, args, label);
-  await step(stepMessage, async () => {});
 }
 
