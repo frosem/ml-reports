@@ -115,7 +115,7 @@ Functions created in `AllureTools.ts`:
 | `storyLink` | URL link to a ticket story |
 | `testLink` | URL link to a test case |
 
-> 💡 **Playwright Tip:** Use `allureExpect()` instead of `expect()` — it logs each assertion as an Allure step, improving report readability by showing what was checked and the actual values.
+> 💡 **Playwright Tip:** Import `expect` from `@playwright-support/AllureTools` instead of `@playwright/test` — it logs each assertion as an Allure step, improving report readability by showing what was checked and the actual values.
 
 ---
 
@@ -151,9 +151,11 @@ npm run jira:dry-run          # Preview without creating issues
 
 The `e2e-tests.yml` workflow runs tests via GitHub Actions dispatch:
 
-1. Navigate to **Actions** → **E2E Tests with Allure Reports & Jira Integration**
+1. Navigate to **Actions** → **E2E Tests Report**
 2. Click **Run workflow**
-3. Select `cypress` or `playwright`
+3. Configure options:
+   - **Framework**: Select `cypress` or `playwright`
+   - **Create bug reports**: Enable to create Jira issues for failed tests
 4. Click **Run workflow**
 
 ### Required Secrets
