@@ -1,18 +1,16 @@
 /**
  * Login Page Actions
- * Application actions for the Login page using LoginPageObjects
  */
 import { type Page } from '@playwright/test';
-import { allureStep, attachAssertion, expect } from '@playwright-support/AllureTools';
+import { allureStep } from '@playwright-support/AllureTools';
+import { BasePage } from '@playwright-support/BasePage';
 import { loginPageObjects } from '@page-objects/LoginPageObjects';
 import urls from '@fixtures/urls.json';
 import users from '@fixtures/users.json';
 
-export class LoginPageActions {
-  readonly page: Page;
-
+export class LoginPageActions extends BasePage {
   constructor(page: Page) {
-    this.page = page;
+    super(page);
   }
 
   /**
@@ -20,7 +18,7 @@ export class LoginPageActions {
    */
   @allureStep()
   async visitLoginPage(): Promise<void> {
-    await this.page.goto(`${urls.baseUrl}${urls.paths.login}`);
+    await this.navigateTo(`${urls.baseUrl}${urls.paths.login}`);
   }
 
   /**
@@ -29,7 +27,7 @@ export class LoginPageActions {
    */
   @allureStep('Enter username: {0}')
   async enterUsernameInput(username: string): Promise<void> {
-    await this.page.getByTestId(loginPageObjects.usernameInputTestId).fill(username);
+    await this.fill(this.page.getByTestId(loginPageObjects.usernameInputTestId), username);
   }
 
   /**
@@ -38,7 +36,7 @@ export class LoginPageActions {
    */
   @allureStep('Enter password')
   async enterPasswordInput(password: string): Promise<void> {
-    await this.page.getByTestId(loginPageObjects.passwordInputTestId).fill(password);
+    await this.fill(this.page.getByTestId(loginPageObjects.passwordInputTestId), password);
   }
 
   /**
@@ -46,7 +44,7 @@ export class LoginPageActions {
    */
   @allureStep()
   async clickOnLoginButton(): Promise<void> {
-    await this.page.getByTestId(loginPageObjects.loginButtonTestId).click();
+    await this.click(this.page.getByTestId(loginPageObjects.loginButtonTestId));
   }
 
   /**
@@ -70,10 +68,10 @@ export class LoginPageActions {
   @allureStep('{0}')
   async verifyErrorMessage(expectedMessage: string): Promise<void> {
     const errorContainer = this.page.getByTestId(loginPageObjects.errorMessageContainerTestId);
-    await expect(errorContainer).toBeVisible();
-    const actualMessage = await errorContainer.innerText();
-    await attachAssertion(expectedMessage, actualMessage);
-    await expect(errorContainer).toContainText(expectedMessage);
+    await this.assert.visible(errorContainer);
+    const actualMessage = await this.getInnerText(errorContainer);
+    await this.assert.attach(expectedMessage, actualMessage);
+    await this.assert.containsText(errorContainer, expectedMessage);
   }
 
   /**
@@ -81,8 +79,8 @@ export class LoginPageActions {
    */
   @allureStep()
   async verifyOnLoginPage(): Promise<void> {
-    await expect(this.page.getByTestId(loginPageObjects.usernameInputTestId)).toBeVisible();
-    await expect(this.page.getByTestId(loginPageObjects.passwordInputTestId)).toBeVisible();
-    await expect(this.page.getByTestId(loginPageObjects.loginButtonTestId)).toBeVisible();
+    await this.assert.visible(this.page.getByTestId(loginPageObjects.usernameInputTestId));
+    await this.assert.visible(this.page.getByTestId(loginPageObjects.passwordInputTestId));
+    await this.assert.visible(this.page.getByTestId(loginPageObjects.loginButtonTestId));
   }
 }

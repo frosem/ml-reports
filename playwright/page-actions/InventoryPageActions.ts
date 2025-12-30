@@ -1,17 +1,15 @@
 /**
  * Inventory Page Actions
- * Application actions for the Inventory page using InventoryPageObjects
  */
 import { type Page } from '@playwright/test';
-import { allureStep, attachAssertion, expect } from '@playwright-support/AllureTools';
+import { allureStep, expect } from '@playwright-support/AllureTools';
+import { BasePage } from '@playwright-support/BasePage';
 import { inventoryPageObjects } from '@page-objects/InventoryPageObjects';
 import urls from '@fixtures/urls.json';
 
-export class InventoryPageActions {
-  readonly page: Page;
-
+export class InventoryPageActions extends BasePage {
   constructor(page: Page) {
-    this.page = page;
+    super(page);
   }
 
   /**
@@ -20,11 +18,11 @@ export class InventoryPageActions {
   @allureStep()
   async verifyOnInventoryPage(): Promise<void> {
     const expectedUrl = `${urls.baseUrl}${urls.paths.inventory}`;
-    const actualUrl = this.page.url();
-    await attachAssertion(expectedUrl, actualUrl);
-    await expect(this.page, { errorMessage: `Should be on inventory page but got: ${actualUrl}` }).toHaveURL(expectedUrl);
+    const actualUrl = this.getCurrentUrl();
+    await this.assert.attach(expectedUrl, actualUrl);
+    await this.assert.url(expectedUrl, { errorMessage: `Should be on inventory page but got: ${actualUrl}` });
 
-    const itemCount = await this.page.getByTestId(inventoryPageObjects.inventoryItemContainerTestId).count();
+    const itemCount = await this.getCount(this.page.getByTestId(inventoryPageObjects.inventoryItemContainerTestId));
     await expect(itemCount, { label: 'product items', errorMessage: 'Inventory should have at least one item' }).toBeGreaterThan(0);
   }
 
@@ -33,7 +31,7 @@ export class InventoryPageActions {
    */
   @allureStep()
   async addFirstItemToCart(): Promise<void> {
-    await this.page.locator(inventoryPageObjects.addToCartButtonCSS()).first().click();
+    await this.click(this.page.locator(inventoryPageObjects.addToCartButtonCSS()).first());
   }
 
   /**
@@ -42,7 +40,7 @@ export class InventoryPageActions {
    */
   @allureStep('Add item to cart by index: {0}')
   async addItemToCartByIndex(index: number): Promise<void> {
-    await this.page.locator(inventoryPageObjects.addToCartButtonCSSByIndex(index)).click();
+    await this.click(this.page.locator(inventoryPageObjects.addToCartButtonCSSByIndex(index)));
   }
 
   /**
@@ -51,7 +49,7 @@ export class InventoryPageActions {
    */
   @allureStep('Add item to cart: {0}')
   async addItemToCartByName(itemName: string): Promise<void> {
-    await this.page.locator(inventoryPageObjects.addToCartButtonCSS(itemName)).click();
+    await this.click(this.page.locator(inventoryPageObjects.addToCartButtonCSS(itemName)));
   }
 
   /**
@@ -60,11 +58,9 @@ export class InventoryPageActions {
    */
   @allureStep()
   async getFirstItemName(): Promise<string> {
-    const text = await this.page
-      .getByTestId(inventoryPageObjects.inventoryItemNameContainerTestId)
-      .first()
-      .textContent();
-    return (text ?? '').trim();
+    return await this.getText(
+      this.page.getByTestId(inventoryPageObjects.inventoryItemNameContainerTestId).first()
+    );
   }
 
   /**
@@ -73,11 +69,9 @@ export class InventoryPageActions {
    */
   @allureStep()
   async getFirstItemPrice(): Promise<string> {
-    const text = await this.page
-      .getByTestId(inventoryPageObjects.inventoryItemPriceContainerTestId)
-      .first()
-      .textContent();
-    return (text ?? '').trim();
+    return await this.getText(
+      this.page.getByTestId(inventoryPageObjects.inventoryItemPriceContainerTestId).first()
+    );
   }
 
   /**
@@ -85,7 +79,7 @@ export class InventoryPageActions {
    */
   @allureStep()
   async clickOnCartIcon(): Promise<void> {
-    await this.page.getByTestId(inventoryPageObjects.cartIconLinkTestId).click();
+    await this.click(this.page.getByTestId(inventoryPageObjects.cartIconLinkTestId));
   }
 
   /**
@@ -95,8 +89,8 @@ export class InventoryPageActions {
   @allureStep('Verify cart badge count: {0}')
   async verifyCartBadgeCount(expectedCount: number): Promise<void> {
     const badge = this.page.getByTestId(inventoryPageObjects.cartBadgeSpanTestId);
-    await expect(badge).toBeVisible();
-    await expect(badge, `Cart badge should show ${expectedCount} item(s)`).toContainText(expectedCount.toString());
+    await this.assert.visible(badge);
+    await this.assert.containsText(badge, expectedCount.toString(), `Cart badge should show ${expectedCount} item(s)`);
   }
 
   /**
@@ -104,9 +98,7 @@ export class InventoryPageActions {
    */
   @allureStep()
   async verifyCartBadgeIsNotVisible(): Promise<void> {
-    await expect(
-      this.page.getByTestId(inventoryPageObjects.cartBadgeSpanTestId)
-    ).not.toBeVisible();
+    await this.assert.hidden(this.page.getByTestId(inventoryPageObjects.cartBadgeSpanTestId));
   }
 
   /**
@@ -115,6 +107,6 @@ export class InventoryPageActions {
    */
   @allureStep()
   async getItemCount(): Promise<number> {
-    return await this.page.getByTestId(inventoryPageObjects.inventoryItemContainerTestId).count();
+    return await this.getCount(this.page.getByTestId(inventoryPageObjects.inventoryItemContainerTestId));
   }
 }
