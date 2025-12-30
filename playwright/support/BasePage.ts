@@ -155,9 +155,9 @@ export abstract class BasePage {
    * @param locator - The locator
    */
   protected async clear(
-		locator: Locator,
-		options?: { force?: boolean; noWaitAfter?: boolean; timeout?: number; }
-	): Promise<void> {
+    locator: Locator,
+    options?: { force?: boolean; noWaitAfter?: boolean; timeout?: number; }
+  ): Promise<void> {
     await locator.clear(options);
   }
 
