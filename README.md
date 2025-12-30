@@ -104,6 +104,20 @@ Manage reports via the `allure-cli.ts` script:
 
 **Links** — Link tests to management tools using `storyLink()` and `testLink()` helpers.
 
+### Settings
+
+You can customize how Allure integrates with your tests by editing `shared/config/allure.config.ts`. These settings let you control what gets captured in your reports:
+
+| Setting | What it does |
+|---------|--------------|
+| Allure expect | Use the Allure expect that logs assertions as steps, or stick with Playwright expect |
+| Screenshot on failure | Attach a screenshot when a test fails |
+| Detailed messages | Show the actual and expected values in assertion step names |
+| Environment info | Include environment information in reporting |
+| Step logging | Log each assertion as a separate step in the report |
+
+All settings are enabled by default. Turn any off if needed for simpler reports or faster test runs.
+
 ### Allure Helpers
 
 Functions created in `AllureTools.ts`:
@@ -199,7 +213,10 @@ ml-allure-reports/
 ├── playwright/
 │   ├── page-actions/             # Page action classes
 │   ├── support/
-│   │   └── AllureTools.ts        # Playwright Allure helpers
+│   │   ├── AllureTools.ts        # Playwright Allure helpers
+│   │   ├── AssertionHelpers.ts   # Assertion utilities
+│   │   ├── BasePage.ts           # Base class for page actions
+│   │   └── WaitHelpers.ts        # Wait utilities
 │   └── tests/                    # Test specs
 ├── scripts/
 │   ├── allure-cli.ts             # Allure CLI tool

@@ -1,7 +1,29 @@
-import { Status } from 'allure-js-commons';
+import { readFileSync } from 'node:fs';
 import { platform, release, version } from 'node:os';
+import { join } from 'node:path';
+import { Status } from 'allure-js-commons';
 import integrations from '@fixtures/management/integrations.json';
 
+export interface AllureSettings {
+  /** Use Allure-wrapped expect with step logging, or plain Playwright expect */
+  allureExpectEnabled: boolean;
+  /** Attach screenshot to Allure report on test failure */
+  attachScreenshotOnFailure: boolean;
+  /** Show detailed assertion context (actual vs expected values) in step names */
+  detailedAssertionMessages: boolean;
+  /** Include environment info (OS, Node version, etc.) in Allure report */
+  includeEnvironmentInfo: boolean;
+  /** Log each assertion as a separate Allure step */
+  stepLogging: boolean;
+}
+
+export const settings: AllureSettings = {
+  allureExpectEnabled: true,
+  attachScreenshotOnFailure: true,
+  detailedAssertionMessages: true,
+  includeEnvironmentInfo: true,
+  stepLogging: true,
+};
 
 /**
  * Common Allure reporter configuration shared between Cypress and Playwright.
@@ -9,7 +31,7 @@ import integrations from '@fixtures/management/integrations.json';
 export function getAllureConfig(framework: Framework) {
   return {
     categories: buildCategories(framework),
-    environmentInfo: buildEnvironmentInfo(framework),
+    environmentInfo: settings.includeEnvironmentInfo ? buildEnvironmentInfo(framework) : {},
     globalLabels: {
       layer: 'e2e',
     },
@@ -28,15 +50,31 @@ export function getAllureConfig(framework: Framework) {
 }
 
 /**
- * Builds environment info with framework name.
+ * Reads package version from node_modules.
+ */
+function getPackageVersion(packageName: string): string {
+  try {
+    const packagePath = join(process.cwd(), 'node_modules', packageName, 'package.json');
+    const pkg = JSON.parse(readFileSync(packagePath, 'utf-8')) as { version: string };
+    return pkg.version;
+  } catch {
+    return 'unknown';
+  }
+}
+
+/**
+ * Builds environment info with framework name and versions.
  */
 function buildEnvironmentInfo(framework: Framework) {
+  const packages = frameworkPackages[framework];
+
   return {
-    framework,
-    node_version: process.version,
-    os_platform: platform(),
-    os_release: release(),
-    os_version: version(),
+    'reporting': `allure v${getPackageVersion(packages.allure)}`,
+    'framework': `${framework} v${getPackageVersion(packages.framework)}`,
+    'node': `node ${process.version}`,
+    'platform': platform(),
+    'release': release(),
+    'version': version(),
   };
 }
 
@@ -87,6 +125,11 @@ export const categories = {
 } as const;
 
 export type Framework = keyof typeof categories;
+
+const frameworkPackages: Record<Framework, { allure: string; framework: string }> = {
+  cypress: { allure: 'allure-cypress', framework: 'cypress' },
+  playwright: { allure: 'allure-playwright', framework: '@playwright/test' },
+};
 
 /**
  * Builds Allure categories with framework-specific regex patterns.

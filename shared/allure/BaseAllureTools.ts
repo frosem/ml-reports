@@ -97,7 +97,8 @@ export function buildAssertionMessage(ctx: AssertionContext): string {
   const actual = quoteValue(ctx.actual ?? 'element');
   const method = formatMethod(ctx.method, ctx.negated);
   const expected = ctx.expected ? quoteValue(ctx.expected) : '';
-  return [status, ctx.modifier, actual, ctx.label, method, expected].filter(Boolean).join(' ');
+  const expectedLabel = expected && ctx.label ? ctx.label : '';
+  return [status, ctx.modifier, actual, ctx.label, method, expected, expectedLabel].filter(Boolean).join(' ');
 }
 
 /**

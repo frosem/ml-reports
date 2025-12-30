@@ -1,17 +1,15 @@
 /**
  * Cart Page Actions
- * Application actions for the Cart page using CartPageObjects
  */
 import { type Page } from '@playwright/test';
-import { allureStep, expect } from '@playwright-support/AllureTools';
+import { allureStep } from '@playwright-support/AllureTools';
+import { BasePage } from '@playwright-support/BasePage';
 import { cartPageObjects } from '@page-objects/CartPageObjects';
 import urls from '@fixtures/urls.json';
 
-export class CartPageActions {
-  readonly page: Page;
-
+export class CartPageActions extends BasePage {
   constructor(page: Page) {
-    this.page = page;
+    super(page);
   }
 
   /**
@@ -19,8 +17,8 @@ export class CartPageActions {
    */
   @allureStep()
   async verifyOnCartPage(): Promise<void> {
-    await expect(this.page).toHaveURL(new RegExp(urls.paths.cart));
-    await expect(this.page.getByTestId(cartPageObjects.cartItemsContainerTestId).first()).toBeVisible();
+    await this.assert.url(new RegExp(urls.paths.cart));
+    await this.assert.visible(this.page.getByTestId(cartPageObjects.cartItemsContainerTestId).first());
   }
 
   /**
@@ -29,7 +27,7 @@ export class CartPageActions {
    */
   @allureStep()
   async getCartItemCount(): Promise<number> {
-    return await this.page.getByTestId(cartPageObjects.cartItemsContainerTestId).count();
+    return await this.getCount(this.page.getByTestId(cartPageObjects.cartItemsContainerTestId));
   }
 
   /**
@@ -38,7 +36,7 @@ export class CartPageActions {
    */
   @allureStep('Verify cart item count: {0}')
   async verifyCartItemCount(expectedCount: number): Promise<void> {
-    await expect(this.page.getByTestId(cartPageObjects.cartItemsContainerTestId)).toHaveCount(expectedCount);
+    await this.assert.count(this.page.getByTestId(cartPageObjects.cartItemsContainerTestId), expectedCount);
   }
 
   /**
@@ -47,7 +45,7 @@ export class CartPageActions {
    */
   @allureStep('Verify cart contains: {0}')
   async verifyCartContainsItem(itemName: string): Promise<void> {
-    await expect(this.page.getByTestId(cartPageObjects.cartItemNameContainerTestId)).toContainText(itemName);
+    await this.assert.containsText(this.page.getByTestId(cartPageObjects.cartItemNameContainerTestId), itemName);
   }
 
   /**
@@ -56,11 +54,9 @@ export class CartPageActions {
    */
   @allureStep()
   async getFirstCartItemName(): Promise<string> {
-    const text = await this.page
-      .getByTestId(cartPageObjects.cartItemNameContainerTestId)
-      .first()
-      .textContent();
-    return (text ?? '').trim();
+    return await this.getText(
+      this.page.getByTestId(cartPageObjects.cartItemNameContainerTestId).first()
+    );
   }
 
   /**
@@ -69,11 +65,9 @@ export class CartPageActions {
    */
   @allureStep()
   async getFirstCartItemPrice(): Promise<string> {
-    const text = await this.page
-      .getByTestId(cartPageObjects.cartItemPriceContainerTestId)
-      .first()
-      .textContent();
-    return (text ?? '').trim();
+    return await this.getText(
+      this.page.getByTestId(cartPageObjects.cartItemPriceContainerTestId).first()
+    );
   }
 
   /**
@@ -82,9 +76,10 @@ export class CartPageActions {
    */
   @allureStep('Verify first cart item price: {0}')
   async verifyFirstCartItemPrice(expectedPrice: string): Promise<void> {
-    await expect(
-      this.page.getByTestId(cartPageObjects.cartItemPriceContainerTestId).first()
-    ).toContainText(expectedPrice);
+    await this.assert.containsText(
+      this.page.getByTestId(cartPageObjects.cartItemPriceContainerTestId).first(),
+      expectedPrice
+    );
   }
 
   /**
@@ -93,11 +88,12 @@ export class CartPageActions {
    */
   @allureStep('Remove item by index: {0}')
   async removeItemButtonByIndex(index: number): Promise<void> {
-    await this.page
-      .getByTestId(cartPageObjects.cartItemsContainerTestId)
-      .nth(index)
-      .locator(cartPageObjects.removeButtonCSS)
-      .click();
+    await this.click(
+      this.page
+        .getByTestId(cartPageObjects.cartItemsContainerTestId)
+        .nth(index)
+        .locator(cartPageObjects.removeButtonCSS)
+    );
   }
 
   /**
@@ -105,7 +101,7 @@ export class CartPageActions {
    */
   @allureStep()
   async clickOnContinueShoppingButton(): Promise<void> {
-    await this.page.getByTestId(cartPageObjects.continueShoppingButtonTestId).click();
+    await this.click(this.page.getByTestId(cartPageObjects.continueShoppingButtonTestId));
   }
 
   /**
@@ -113,7 +109,7 @@ export class CartPageActions {
    */
   @allureStep()
   async clickOnCheckoutButton(): Promise<void> {
-    await this.page.getByTestId(cartPageObjects.checkoutButtonTestId).click();
+    await this.click(this.page.getByTestId(cartPageObjects.checkoutButtonTestId));
   }
 
   /**
@@ -121,6 +117,6 @@ export class CartPageActions {
    */
   @allureStep()
   async verifyCartIsEmpty(): Promise<void> {
-    await expect(this.page.getByTestId(cartPageObjects.cartItemsContainerTestId)).toHaveCount(0);
+    await this.assert.count(this.page.getByTestId(cartPageObjects.cartItemsContainerTestId), 0);
   }
 }
