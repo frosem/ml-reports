@@ -1,5 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
-import { getAllureConfig } from '@shared/config/allure.config';
+import { getAllureConfig, settings } from '@shared/config/allure.config';
 
 /**
  * Read environment variables from file.
@@ -42,7 +42,9 @@ export default defineConfig({
     // baseURL: 'http://localhost:3000',
     actionTimeout: 5000, /* Default timeout for actions (click, fill, etc.) that wait for elements */
     testIdAttribute: 'data-test',
-    screenshot: { mode: 'only-on-failure', fullPage: true },
+    screenshot: settings.attachScreenshotOnFailure
+      ? { mode: 'only-on-failure', fullPage: true }
+      : 'off',
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
     video: 'on',

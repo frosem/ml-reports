@@ -1,6 +1,7 @@
 import { expect as playwrightExpect, test } from '@playwright/test';
 import { attachment, ContentType, link, logStep, Status, step, testCaseId } from 'allure-js-commons';
 import { type AssertionContext, BaseAllureTools, buildAssertionMessage } from '@shared/allure/BaseAllureTools';
+import { settings } from '@shared/config/allure.config';
 export { allureStep } from '@shared/allure/AllureStepDecorator';
 
 class AllureTools extends BaseAllureTools {
@@ -58,10 +59,50 @@ expectFn.soft = <T>(actual: T, options?: ExpectOptions | string) => {
   return wrapExpect(playwrightExpect.soft(actual), actual, opts);
 };
 
-export const expect = expectFn as typeof playwrightExpect & {
+const allureExpect = expectFn as typeof playwrightExpect & {
   <T>(actual: T, options?: ExpectOptions | string): ReturnType<typeof playwrightExpect<T>>;
   soft: <T>(actual: T, options?: ExpectOptions | string) => ReturnType<typeof playwrightExpect<T>>;
 };
+
+/**
+ * Wrapper that converts ExpectOptions to Playwright's message format when allure is disabled.
+ */
+function createPlainExpect<T>(actual: T, options?: ExpectOptions | string) {
+  if (!options) {
+    return playwrightExpect(actual);
+  }
+  const message = typeof options === 'string' ? options : options.errorMessage;
+  return playwrightExpect(actual, message ? { message } : undefined);
+}
+
+// Copy all properties from Playwright's expect to plain wrapper
+for (const key of Object.keys(playwrightExpect) as Array<keyof typeof playwrightExpect>) {
+  (createPlainExpect as unknown as Record<string, unknown>)[key] = playwrightExpect[key];
+}
+
+createPlainExpect.soft = <T>(actual: T, options?: ExpectOptions | string) => {
+  if (!options) {
+    return playwrightExpect.soft(actual);
+  }
+  const message = typeof options === 'string' ? options : options.errorMessage;
+  return playwrightExpect.soft(actual, message ? { message } : undefined);
+};
+
+const plainExpect = createPlainExpect as typeof playwrightExpect & {
+  <T>(actual: T, options?: ExpectOptions | string): ReturnType<typeof playwrightExpect<T>>;
+  soft: <T>(actual: T, options?: ExpectOptions | string) => ReturnType<typeof playwrightExpect<T>>;
+};
+
+type AllureExpect = typeof playwrightExpect & {
+  <T>(actual: T, options?: ExpectOptions | string): ReturnType<typeof playwrightExpect<T>>;
+  soft: <T>(actual: T, options?: ExpectOptions | string) => ReturnType<typeof playwrightExpect<T>>;
+};
+
+/**
+ * Use allure expect steps or plain Playwright expect based on Allure settings.
+ * Configure via shared/config/allure.config.ts
+ */
+export const expect: AllureExpect = settings.allureExpectEnabled ? allureExpect : plainExpect;
 
 /**
  * Gets the count of soft assertion errors from Playwright's test info.
@@ -91,12 +132,16 @@ function wrapExpect<T extends object>(expectation: T, original: unknown, options
 
         if (isAssertion) {
           return async (...args: unknown[]) => {
-            const actualValue = await extractValueFromOriginal(original);
+            const actualValue = settings.detailedAssertionMessages
+              ? await extractValueFromOriginal(original)
+              : null;
             const errorCountBefore = getSoftErrorCount();
 
             const ctx: AssertionContext = {
               actual: actualValue,
-              expected: args.length > 0 ? String(args[0]).trim() : undefined,
+              expected: settings.detailedAssertionMessages && args.length > 0
+                ? String(args[0]).trim()
+                : undefined,
               label: options.label,
               method: propName,
               modifier: options.soft ? 'soft' : undefined,
@@ -109,22 +154,25 @@ function wrapExpect<T extends object>(expectation: T, original: unknown, options
               const errorCountAfter = getSoftErrorCount();
 
               if (errorCountAfter > errorCountBefore) {
-                // Soft assertion failed (didn't throw but added error)
+                // Soft assertion failed: didn't throw but added to test.info().errors.
                 const failureMessage = options.errorMessage ?? buildAssertionMessage({ ...ctx, status: Status.FAILED });
-                await Promise.resolve(step(failureMessage, () => { throw new Error(failureMessage); })).catch(() => {});
+                if (settings.stepLogging) {
+                  await Promise.resolve(step(failureMessage, () => { throw new Error(failureMessage); })).catch(() => {});
+                }
                 const errors = test.info().errors;
                 if (errors.length > 0) {
                   errors[errors.length - 1].message = failureMessage;
                 }
-              } else {
-                // Assertion passed
+              } else if (settings.stepLogging) {
                 await step(buildAssertionMessage(ctx), async () => {});
               }
               return result;
             } catch (error) {
               // Regular assertion failed (threw error)
               const failureMessage = options.errorMessage ?? buildAssertionMessage({ ...ctx, status: Status.FAILED });
-              await Promise.resolve(step(failureMessage, () => { throw new Error(failureMessage); })).catch(() => {});
+              if (settings.stepLogging) {
+                await Promise.resolve(step(failureMessage, () => { throw new Error(failureMessage); })).catch(() => {});
+              }
               if (error instanceof Error) {
                 error.message = failureMessage;
               }
