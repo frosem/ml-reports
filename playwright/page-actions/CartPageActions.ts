@@ -3,7 +3,7 @@
  */
 import { type Page } from '@playwright/test';
 import { allureStep } from '@playwright-support/AllureTools';
-import { BasePage } from '@playwright-support/BasePage';
+import { BasePage } from '@playwright-core/BasePage';
 import { cartPageObjects } from '@page-objects/CartPageObjects';
 import urls from '@fixtures/urls.json';
 

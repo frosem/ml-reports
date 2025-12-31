@@ -211,12 +211,13 @@ ml-allure-reports/
 │   └── support/
 │       └── AllureTools.ts        # Cypress Allure helpers
 ├── playwright/
+│   ├── core/
+│   │   ├── Assertions.ts         # Assertion methods
+│   │   ├── BasePage.ts           # Base class for page actions
+│   │   └── Waits.ts              # Wait methods
 │   ├── page-actions/             # Page action classes
 │   ├── support/
-│   │   ├── AllureTools.ts        # Playwright Allure helpers
-│   │   ├── AssertionHelpers.ts   # Assertion utilities
-│   │   ├── BasePage.ts           # Base class for page actions
-│   │   └── WaitHelpers.ts        # Wait utilities
+│   │   └── AllureTools.ts        # Allure reporting utilities
 │   └── tests/                    # Test specs
 ├── scripts/
 │   ├── allure-cli.ts             # Allure CLI tool

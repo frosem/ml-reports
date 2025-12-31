@@ -1,5 +1,5 @@
 /**
- * Wait Helpers
+ * Waits
  */
 import { type Locator, type Page, type Response } from '@playwright/test';
 
@@ -11,7 +11,7 @@ export interface FilterOptions {
   visible?: boolean;
 }
 
-export class WaitHelpers {
+export class Waits {
   constructor(private readonly page: Page) {}
 
   /**
