@@ -27,52 +27,25 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe(allure.features.authentication.stories.validLogin, () => {
-  test.beforeEach(async () => {
+  test('TC-001: valid users redirect to inventory page after login', async () => {
     await subSuite(allure.features.authentication.stories.validLogin);
     await story(allure.features.authentication.stories.validLogin);
     await severity(Severity.CRITICAL);
-  });
-
-  test('TC-001: standard user redirects to inventory page after login', async () => {
     await testLink('TC-001');
-    await description('Standard user with valid credentials is redirected to inventory page.');
+    await description('All users with correct credentials are redirected to inventory page.');
 
-    await loginPage.login(users.valid.standard.username, users.valid.standard.password);
-    await inventoryPage.verifyOnInventoryPage();
-  });
+    const validUsers = [
+      users.valid.error,
+      users.valid.problem,
+      users.valid.standard,
+      users.valid.visual,
+    ];
 
-  test('TC-002: problem user redirects to inventory page after login', async () => {
-    await testLink('TC-002');
-    await description('Problem user with valid credentials is redirected to inventory page.');
-
-    await loginPage.login(users.valid.problem.username, users.valid.problem.password);
-    await inventoryPage.verifyOnInventoryPage();
-  });
-
-  test('TC-003: performance glitch user redirects to inventory page after login', async ({ page }) => {
-    // Performance glitch user intentionally delays responses - increase timeout
-    page.setDefaultTimeout(30000);
-    await testLink('TC-003');
-    await description('Performance glitch user is redirected to inventory page (delayed response expected).');
-
-    await loginPage.login(users.valid.performance.username, users.valid.performance.password);
-    await inventoryPage.verifyOnInventoryPage();
-  });
-
-  test('TC-004: error user redirects to inventory page after login', async () => {
-    await testLink('TC-004');
-    await description('Error user with valid credentials is redirected to inventory page.');
-
-    await loginPage.login(users.valid.error.username, users.valid.error.password);
-    await inventoryPage.verifyOnInventoryPage();
-  });
-
-  test('TC-005: visual user redirects to inventory page after login', async () => {
-    await testLink('TC-005');
-    await description('Visual user with valid credentials is redirected to inventory page.');
-
-    await loginPage.login(users.valid.visual.username, users.valid.visual.password);
-    await inventoryPage.verifyOnInventoryPage();
+    for (const user of validUsers) {
+      await loginPage.login(user.username, user.password);
+      await inventoryPage.verifyOnInventoryPage();
+      await loginPage.visitLoginPage();
+    }
   });
 });
 

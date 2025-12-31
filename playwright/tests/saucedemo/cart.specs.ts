@@ -58,12 +58,13 @@ test.describe(allure.features.cart.stories.addToCart, () => {
     await testLink('TC-024');
     await description('Verify that multiple different items can be added to the cart.');
 
-    await inventoryPage.addItemToCartByName(products.items[1].name);
-    await inventoryPage.addItemToCartByName(products.items[2].name);
-    await inventoryPage.addItemToCartByName(products.items[3].name);
-    await inventoryPage.verifyCartBadgeCount(3);
+    const itemsToAdd = [products.items[1], products.items[2], products.items[3]];
+    for (const item of itemsToAdd) {
+      await inventoryPage.addItemToCartByName(item.name);
+    }
+    await inventoryPage.verifyCartBadgeCount(itemsToAdd.length);
     await inventoryPage.clickOnCartIcon();
-    await cartPage.verifyCartItemCount(3);
+    await cartPage.verifyCartItemCount(itemsToAdd.length);
   });
 
   test('TC-025: should not add same item twice', async () => {
@@ -72,9 +73,9 @@ test.describe(allure.features.cart.stories.addToCart, () => {
 
     await inventoryPage.addItemToCartByName(products.items[4].name);
     await inventoryPage.verifyCartBadgeCount(1);
-    // Button should change to Remove after adding
-    await inventoryPage.removeItemFromCartByName(products.items[4].name);
-    await inventoryPage.verifyCartBadgeIsNotVisible();
+    await inventoryPage.verifyRemoveButtonVisibleForItem(products.items[4].name);
+    await inventoryPage.clickOnCartIcon();
+    await cartPage.verifyCartItemCount(1);
   });
 
   test('TC-037: should add item from product detail page', async () => {
@@ -121,12 +122,15 @@ test.describe(allure.features.cart.stories.removeFromCart, () => {
     await testLink('TC-028');
     await description('Verify that all items can be removed from the cart.');
 
-    await inventoryPage.addItemToCartByName(products.items[3].name);
-    await inventoryPage.addItemToCartByName(products.items[4].name);
+    const itemsToRemove = [products.items[3], products.items[4]];
+    for (const item of itemsToRemove) {
+      await inventoryPage.addItemToCartByName(item.name);
+    }
     await inventoryPage.clickOnCartIcon();
-    await cartPage.verifyCartItemCount(2);
-    await cartPage.removeItemByName(products.items[3].name);
-    await cartPage.removeItemByName(products.items[4].name);
+    await cartPage.verifyCartItemCount(itemsToRemove.length);
+    for (const item of itemsToRemove) {
+      await cartPage.removeItemByName(item.name);
+    }
     await cartPage.verifyCartIsEmpty();
   });
 

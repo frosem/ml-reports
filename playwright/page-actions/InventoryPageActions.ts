@@ -64,6 +64,15 @@ export class InventoryPageActions extends BasePage {
   }
 
   /**
+   * Verify remove button is visible for a specific item (item was added to cart)
+   * @param itemName - The name of the item
+   */
+  @allureStep('Verify remove button is visible for: {0}')
+  async verifyRemoveButtonVisibleForItem(itemName: string): Promise<void> {
+    await this.assert.visible(this.page.locator(inventoryPageObjects.removeButtonCSS(itemName)));
+  }
+
+  /**
    * Verify the number of items displayed on the inventory page
    * @param expectedCount - Expected number of items
    */
