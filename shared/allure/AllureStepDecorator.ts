@@ -82,14 +82,15 @@ export function allureDecorator(stepFunction: StepFunction) {
       return function (this: unknown, ...args: Parameters<T>): ReturnType<T> {
         let name: string;
 
-        if (stepName) {
+        // If no args provided, always use formatted method name
+        if (args.length === 0 || !stepName) {
+          name = formatMethodName(methodName);
+        } else {
           const interpolated = interpolateStepName(stepName, args);
           // If template starts with placeholder, prepend method name
           name = startsWithPlaceholder(stepName)
             ? `${formatMethodName(methodName)}: ${interpolated}`
             : interpolated;
-        } else {
-          name = formatMethodName(methodName);
         }
 
         return stepFunction(name, () => {

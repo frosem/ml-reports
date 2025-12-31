@@ -1,40 +1,77 @@
 {
   "epics": {
-    "cart": "Cart Management",
-    "checkout": "Checkout Process",
+    "platform": "Platform",
+    "productCatalog": "Product Catalog",
+    "shopping": "Shopping",
+    "userExperience": "User Experience",
     "userManagement": "User Management"
   },
   "features": {
+    "appState": {
+      "name": "App State",
+      "stories": {
+        "resetState": "Reset State"
+      }
+    },
     "authentication": {
-      "name": "Login",
+      "name": "Authentication",
       "stories": {
         "accountSecurity": "Account Security",
         "invalidLogin": "Invalid Credentials",
+        "logout": "Logout",
+        "sessionManagement": "Session Management",
         "validLogin": "Valid Credentials"
       }
     },
-    "cartManagement": {
-      "name": "Cart Operations",
+    "cart": {
+      "name": "Cart",
       "stories": {
         "addToCart": "Add to Cart",
+        "cartPersistence": "Cart Persistence",
         "removeFromCart": "Remove from Cart",
         "viewCart": "View Cart"
       }
     },
     "checkout": {
-      "name": "Order Checkout",
+      "name": "Checkout",
       "stories": {
         "completeOrder": "Complete Order",
         "enterShippingInfo": "Shipping Information",
-        "orderConfirmation": "Order Confirmation"
+        "orderConfirmation": "Order Confirmation",
+        "orderSummary": "Order Summary"
       }
     },
     "inventory": {
-      "name": "Product Inventory",
+      "name": "Product Browsing",
       "stories": {
-        "filterProducts": "Filter Products",
+        "productDisplay": "Product Display",
         "sortProducts": "Sort Products",
         "viewProductDetails": "Product Details"
+      }
+    },
+    "navigation": {
+      "name": "Navigation",
+      "stories": {
+        "menuNavigation": "Menu Navigation",
+        "pageNavigation": "Page Navigation"
+      }
+    },
+    "performance": {
+      "name": "Load Time",
+      "stories": {
+        "pageLoadTime": "Page Load Time"
+      }
+    },
+    "responsiveDesign": {
+      "name": "Responsive Design",
+      "stories": {
+        "mobileViewport": "Mobile Viewport"
+      }
+    },
+    "security": {
+      "name": "Security",
+      "stories": {
+        "protectedRoutes": "Protected Routes"
       }
     }
   },
@@ -43,14 +80,16 @@
   },
   "parentSuite": "SauceDemo",
   "testSuites": {
-    "authentication": "Login Tests",
-    "cartOperations": "Cart Tests",
-    "checkoutFlow": "Checkout Tests",
-    "inventory": "Inventory Tests"
+    "authentication": "Authentication Tests",
+    "cart": "Cart Tests",
+    "checkout": "Checkout Tests",
+    "inventory": "Product Catalog Tests",
+    "platform": "Platform Tests",
+    "userExperience": "User Experience Tests"
   },
   "tags": {
+    "critical": "critical",
     "regression": "regression",
     "smoke": "smoke"
   }
 }
-

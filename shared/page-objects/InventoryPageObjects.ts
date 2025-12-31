@@ -9,13 +9,19 @@ export const inventoryPageObjects = {
     }
     return '.btn_inventory';
   },
-  addToCartButtonCSSByIndex: (index: number): string => {
-    return `.inventory_item:nth-child(${index}) .btn_inventory`;
-  },
   cartBadgeSpanTestId: 'shopping-cart-badge',
   cartIconLinkTestId: 'shopping-cart-link',
+  inventoryItemContainerTestId: 'inventory-item',
+  inventoryItemDescriptionTestId: 'inventory-item-desc',
+  inventoryItemImageCSS: '.inventory_item_img img',
   inventoryItemNameContainerTestId: 'inventory-item-name',
   inventoryItemPriceContainerTestId: 'inventory-item-price',
-  inventoryItemContainerTestId: 'inventory-item',
+  removeButtonCSS: (itemName?: string): string => {
+    if (itemName) {
+      return `[data-test="remove-${itemName.toLowerCase().replace(/\s+/g, '-')}"]`;
+    }
+    return '[data-test^="remove-"]';
+  },
+  sortDropdownTestId: 'product-sort-container',
 };
 

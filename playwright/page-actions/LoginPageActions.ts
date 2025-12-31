@@ -19,6 +19,7 @@ export class LoginPageActions extends BasePage {
   @allureStep()
   async visitLoginPage(): Promise<void> {
     await this.navigateTo(`${urls.baseUrl}${urls.paths.login}`);
+    await this.verifyOnLoginPage();
   }
 
   /**
@@ -79,8 +80,7 @@ export class LoginPageActions extends BasePage {
    */
   @allureStep()
   async verifyOnLoginPage(): Promise<void> {
-    await this.assert.visible(this.page.getByTestId(loginPageObjects.usernameInputTestId));
-    await this.assert.visible(this.page.getByTestId(loginPageObjects.passwordInputTestId));
+    await this.assert.url(urls.baseUrl);
     await this.assert.visible(this.page.getByTestId(loginPageObjects.loginButtonTestId));
   }
 }

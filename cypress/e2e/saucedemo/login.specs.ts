@@ -3,7 +3,7 @@ import { description, epic, feature, Severity, severity, story } from 'allure-js
 import { InventoryPageActions } from '@cypress-page-actions/InventoryPageActions';
 import { LoginPageActions } from '@cypress-page-actions/LoginPageActions';
 import allure from '@fixtures/management/allure-metadata.json';
-import errorMessages from '@fixtures/error-messages.json';
+import messages from '@fixtures/messages.json';
 import users from '@fixtures/users.json';
 
 beforeEach(() => {
@@ -12,7 +12,6 @@ beforeEach(() => {
   storyLink('DEV-1');
 
   LoginPageActions.visitLoginPage();
-  LoginPageActions.verifyOnLoginPage();
 });
 
 describe(allure.parentSuite, () => {
@@ -42,7 +41,7 @@ describe(allure.parentSuite, () => {
             users.invalid.lockedOut.username,
             users.invalid.lockedOut.password
           );
-          LoginPageActions.verifyErrorMessage(errorMessages.login.lockedOut);
+          LoginPageActions.verifyErrorMessage(messages.login.lockedOut);
         });
       });
 
@@ -60,7 +59,7 @@ describe(allure.parentSuite, () => {
             users.invalid.wrongCredentials.username,
             users.invalid.wrongCredentials.password
           );
-          LoginPageActions.verifyErrorMessage(errorMessages.login.invalidCredentials);
+          LoginPageActions.verifyErrorMessage(messages.login.invalidCredentials);
         });
 
         it('should display error message with empty username', () => {
@@ -69,7 +68,7 @@ describe(allure.parentSuite, () => {
 
           LoginPageActions.enterPasswordInput(users.valid.standard.password);
           LoginPageActions.clickOnLoginButton();
-          LoginPageActions.verifyErrorMessage(errorMessages.login.usernameRequired);
+          LoginPageActions.verifyErrorMessage(messages.login.usernameRequired);
         });
 
         it('should display error message with empty password', () => {
@@ -78,7 +77,7 @@ describe(allure.parentSuite, () => {
 
           LoginPageActions.enterUsernameInput(users.valid.standard.username);
           LoginPageActions.clickOnLoginButton();
-          LoginPageActions.verifyErrorMessage(errorMessages.login.passwordRequired);
+          LoginPageActions.verifyErrorMessage(messages.login.passwordRequired);
         });
       });
     });

@@ -36,7 +36,7 @@ export class InventoryPageActions {
    */
   @allureStep('Add item to cart with index: {0}')
   static addItemToCartByIndex(index: number): void {
-    cy.get(inventoryPageObjects.addToCartButtonCSSByIndex(index)).click();
+    cy.get(inventoryPageObjects.addToCartButtonCSS()).eq(index).click();
   }
 
   /**
