@@ -1,12 +1,12 @@
 /**
- * Assertion Helpers
+ * Assertions
  */
 import { type Locator, type Page } from '@playwright/test';
 import { attachAssertion, expect, type ExpectOptions } from '@playwright-support/AllureTools';
 
 export type AriaRole = Parameters<Page['getByRole']>[0];
 
-export class AssertionHelpers {
+export class Assertions {
   constructor(private readonly page: Page) {}
 
   /**

@@ -3,8 +3,8 @@
  * Provides common utility methods for all page actions.
  */
 import { type Locator, type Page, type Response } from '@playwright/test';
-import { AssertionHelpers } from '@playwright-support/AssertionHelpers';
-import { WaitHelpers } from '@playwright-support/WaitHelpers';
+import { Assertions } from '@playwright-core/Assertions';
+import { Waits } from '@playwright-core/Waits';
 
 export interface ClickOptions {
   button?: 'left' | 'middle' | 'right';
@@ -35,13 +35,13 @@ export interface ScreenshotOptions {
 
 export abstract class BasePage {
   readonly page: Page;
-  protected readonly assert: AssertionHelpers;
-  protected readonly wait: WaitHelpers;
+  protected readonly assert: Assertions;
+  protected readonly wait: Waits;
 
   constructor(page: Page) {
     this.page = page;
-    this.assert = new AssertionHelpers(page);
-    this.wait = new WaitHelpers(page);
+    this.assert = new Assertions(page);
+    this.wait = new Waits(page);
   }
 
   // ─────────────────────────────────────────────────────────────────────────────

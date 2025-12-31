@@ -15,6 +15,7 @@
       "@fixtures/*": ["shared/fixtures/*"],
       "@jira/*": ["jira/*"],
       "@page-objects/*": ["shared/page-objects/*"],
+      "@playwright-core/*": ["playwright/core/*"],
       "@playwright-page-actions/*": ["playwright/page-actions/*"],
       "@playwright-support/*": ["playwright/support/*"],
       "@shared/*": ["shared/*"]
