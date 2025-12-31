@@ -1,9 +1,0 @@
-{
-  "login": {
-    "usernameRequired": "Username is required",
-    "passwordRequired": "Password is required",
-    "invalidCredentials": "Username and password do not match",
-    "lockedOut": "Sorry, this user has been locked out."
-  }
-}
-
