@@ -7,8 +7,8 @@ import allure from '@fixtures/management/allure-metadata.json';
 import products from '@fixtures/products.json';
 
 beforeEach(() => {
-  epic(allure.epics.cart);
-  feature(allure.features.cartManagement.name);
+  epic(allure.epics.shopping);
+  feature(allure.features.cart.name);
   storyLink('DEV-2');
 
   LoginPageActions.visitLoginPage();
@@ -17,10 +17,10 @@ beforeEach(() => {
 });
 
 describe(allure.parentSuite, () => {
-  describe(allure.testSuites.cartOperations, () => {
+  describe(allure.testSuites.cart, () => {
     describe('Add Item to Cart', () => {
       beforeEach(() => {
-        story(allure.features.cartManagement.stories.addToCart);
+        story(allure.features.cart.stories.addToCart);
         severity(Severity.CRITICAL);
       });
 
@@ -85,7 +85,7 @@ describe(allure.parentSuite, () => {
 
     describe('Remove Item from Cart', () => {
       it('should remove item from cart', () => {
-        story(allure.features.cartManagement.stories.removeFromCart);
+        story(allure.features.cart.stories.removeFromCart);
         severity(Severity.CRITICAL);
         testLink('QA-10');
         description('Verifies that a product can be removed from the cart.');

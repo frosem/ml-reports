@@ -14,6 +14,7 @@ export class LoginPageActions {
   @allureStep()
   static visitLoginPage(): void {
     cy.visit(`${urls.baseUrl}${urls.paths.login}`);
+    this.verifyOnLoginPage();
   }
 
   /**
@@ -76,8 +77,7 @@ export class LoginPageActions {
    */
   @allureStep()
   static verifyOnLoginPage(): void {
-    cy.findByTestId(loginPageObjects.usernameInputTestId).should('be.visible');
-    cy.findByTestId(loginPageObjects.passwordInputTestId).should('be.visible');
+    cy.url().should('eq', `${urls.baseUrl}${urls.paths.login}`);
     cy.findByTestId(loginPageObjects.loginButtonTestId).should('be.visible');
   }
 }
