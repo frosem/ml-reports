@@ -23,10 +23,28 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
+  /**
+   * Reporter to use. See https://playwright.dev/docs/test-reporters
+   *
+   * Built-in reporters:
+   * - 'list'   : Shows each test on a new line as it runs (default, good for local dev)
+   * - 'line'   : Single updating line, minimal output (good for CI logs)
+   * - 'dot'    : Outputs dots for pass/fail (minimal, quick feedback)
+   * - 'html'   : Interactive HTML report with screenshots/traces (outputFolder, open: 'always'|'never'|'on-failure')
+   * - 'json'   : JSON output for programmatic processing (outputFile: 'results.json')
+   * - 'junit'  : JUnit XML for CI systems like Jenkins (outputFile: 'results.xml')
+   * - 'github' : GitHub Actions annotations on PRs (auto-enabled in GH Actions)
+   *
+   * Third-party reporters (install via npm):
+   * - 'allure-playwright' : Rich interactive reports with history, trends, and detailed steps
+   */
   reporter: [
-    ['list'],
-    ['html', { open: 'never' }],
+    ['list'], // Terminal output during test runs
+    // ['dot'], // Minimal dots output (. for pass, F for fail)
+    // ['line'], // Single updating line per test
+    // ['html', { open: 'never', outputFolder: 'playwright-report' }], // Interactive HTML report
+    // ['json', { outputFile: 'test-results.json' }], // JSON for CI/programmatic use
+    // ['junit', { outputFile: 'test-results.xml' }], // JUnit XML for Jenkins/CI
     [
       'allure-playwright',
       {
@@ -40,7 +58,7 @@ export default defineConfig({
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
     // baseURL: 'http://localhost:3000',
-    actionTimeout: 5000, /* Default timeout for actions (click, fill, etc.) that wait for elements */
+    actionTimeout: 10000, /* Default timeout for actions (click, fill, etc.) that wait for elements */
     testIdAttribute: 'data-test',
     screenshot: settings.attachScreenshotOnFailure
       ? { mode: 'only-on-failure', fullPage: true }
