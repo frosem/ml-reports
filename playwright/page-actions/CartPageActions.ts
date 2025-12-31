@@ -18,16 +18,6 @@ export class CartPageActions extends BasePage {
   @allureStep()
   async verifyOnCartPage(): Promise<void> {
     await this.assert.url(new RegExp(urls.paths.cart));
-    await this.assert.visible(this.page.getByTestId(cartPageObjects.cartItemsContainerTestId).first());
-  }
-
-  /**
-   * Get the number of items in the cart
-   * @returns items count number
-   */
-  @allureStep()
-  async getCartItemCount(): Promise<number> {
-    return await this.getCount(this.page.getByTestId(cartPageObjects.cartItemsContainerTestId));
   }
 
   /**
@@ -45,55 +35,10 @@ export class CartPageActions extends BasePage {
    */
   @allureStep('Verify cart contains: {0}')
   async verifyCartContainsItem(itemName: string): Promise<void> {
-    await this.assert.containsText(this.page.getByTestId(cartPageObjects.cartItemNameContainerTestId), itemName);
-  }
-
-  /**
-   * Get the name of the first cart item
-   * @returns the item name
-   */
-  @allureStep()
-  async getFirstCartItemName(): Promise<string> {
-    return await this.getText(
-      this.page.getByTestId(cartPageObjects.cartItemNameContainerTestId).first()
-    );
-  }
-
-  /**
-   * Get the price of the first cart item
-   * @returns The item price
-   */
-  @allureStep()
-  async getFirstCartItemPrice(): Promise<string> {
-    return await this.getText(
-      this.page.getByTestId(cartPageObjects.cartItemPriceContainerTestId).first()
-    );
-  }
-
-  /**
-   * Verify the first cart item has the expected price
-   * @param expectedPrice - The expected price text
-   */
-  @allureStep('Verify first cart item price: {0}')
-  async verifyFirstCartItemPrice(expectedPrice: string): Promise<void> {
-    await this.assert.containsText(
-      this.page.getByTestId(cartPageObjects.cartItemPriceContainerTestId).first(),
-      expectedPrice
-    );
-  }
-
-  /**
-   * Remove item from cart by index
-   * @param index - The index of the item to remove
-   */
-  @allureStep('Remove item by index: {0}')
-  async removeItemButtonByIndex(index: number): Promise<void> {
-    await this.click(
-      this.page
-        .getByTestId(cartPageObjects.cartItemsContainerTestId)
-        .nth(index)
-        .locator(cartPageObjects.removeButtonCSS)
-    );
+    const itemLocator = this.page
+      .getByTestId(cartPageObjects.cartItemNameContainerTestId)
+      .filter({ hasText: itemName });
+    await this.assert.visible(itemLocator, `Cart should contain item "${itemName}"`);
   }
 
   /**
@@ -119,4 +64,28 @@ export class CartPageActions extends BasePage {
   async verifyCartIsEmpty(): Promise<void> {
     await this.assert.count(this.page.getByTestId(cartPageObjects.cartItemsContainerTestId), 0);
   }
+
+  /**
+   * Remove item from cart by name
+   * @param itemName - The name of the item to remove
+   */
+  @allureStep('Remove from cart: {0}')
+  async removeItemByName(itemName: string): Promise<void> {
+    const itemContainer = this.page
+      .getByTestId(cartPageObjects.cartItemsContainerTestId)
+      .filter({ hasText: itemName });
+    await this.click(itemContainer.locator(cartPageObjects.removeButtonCSS));
+  }
+
+  /**
+   * Verify cart does not contain item
+   * @param itemName - The item name that should not be in cart
+   */
+  @allureStep('Verify cart does not contain: {0}')
+  async verifyCartDoesNotContainItem(itemName: string): Promise<void> {
+    await this.assert.hidden(
+      this.page.getByTestId(cartPageObjects.cartItemNameContainerTestId).filter({ hasText: itemName })
+    );
+  }
+
 }

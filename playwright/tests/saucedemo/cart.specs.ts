@@ -1,104 +1,246 @@
 import { test } from '@playwright/test';
-import { description, epic, feature, parentSuite, Severity, severity, story, suite } from 'allure-js-commons';
+import { description, epic, feature, parentSuite, Severity, severity, story, subSuite, suite } from 'allure-js-commons';
 import { storyLink, testLink } from '@playwright-support/AllureTools';
 import { CartPageActions } from '@playwright-page-actions/CartPageActions';
+import { CheckoutPageActions } from '@playwright-page-actions/CheckoutPageActions';
+import { HeaderPageActions } from '@playwright-page-actions/HeaderPageActions';
 import { InventoryPageActions } from '@playwright-page-actions/InventoryPageActions';
 import { LoginPageActions } from '@playwright-page-actions/LoginPageActions';
+import { ProductDetailPageActions } from '@playwright-page-actions/ProductDetailPageActions';
 import allure from '@fixtures/management/allure-metadata.json';
 import products from '@fixtures/products.json';
 
 let cartPage: CartPageActions;
+let checkoutPage: CheckoutPageActions;
+let headerPage: HeaderPageActions;
 let inventoryPage: InventoryPageActions;
 let loginPage: LoginPageActions;
+let productDetailPage: ProductDetailPageActions;
 
 test.beforeEach(async ({ page }) => {
   await parentSuite(allure.parentSuite);
-  await suite(allure.testSuites.cartOperations);
-  await epic(allure.epics.cart);
-  await feature(allure.features.cartManagement.name);
+  await suite(allure.testSuites.cart);
+  await epic(allure.epics.shopping);
+  await feature(allure.features.cart.name);
   await storyLink('DEV-2');
 
-  loginPage = new LoginPageActions(page);
-  inventoryPage = new InventoryPageActions(page);
   cartPage = new CartPageActions(page);
+  checkoutPage = new CheckoutPageActions(page);
+  headerPage = new HeaderPageActions(page);
+  inventoryPage = new InventoryPageActions(page);
+  loginPage = new LoginPageActions(page);
+  productDetailPage = new ProductDetailPageActions(page);
 
   await loginPage.visitLoginPage();
   await loginPage.login();
   await inventoryPage.verifyOnInventoryPage();
 });
 
-test.describe('Add Item to Cart', () => {
+test.describe(allure.features.cart.stories.addToCart, () => {
   test.beforeEach(async () => {
-    await story(allure.features.cartManagement.stories.addToCart);
+    await subSuite(allure.features.cart.stories.addToCart);
+    await story(allure.features.cart.stories.addToCart);
     await severity(Severity.CRITICAL);
   });
 
-  test('should add first item to cart and verify in cart', async () => {
-    await testLink('QA-6');
-    await description('Verifies that the first product can be added to the cart.');
+  test('TC-023: should add single item to cart', async () => {
+    await testLink('TC-023');
+    await description('Verify that a single item can be added to the cart.');
 
-    const firstItemName: string = await inventoryPage.getFirstItemName();
-    await inventoryPage.addFirstItemToCart();
+    await inventoryPage.addItemToCartByName(products.items[0].name);
     await inventoryPage.verifyCartBadgeCount(1);
     await inventoryPage.clickOnCartIcon();
     await cartPage.verifyOnCartPage();
-    await cartPage.verifyCartItemCount(1);
-    await cartPage.verifyCartContainsItem(firstItemName);
+    await cartPage.verifyCartContainsItem(products.items[0].name);
   });
 
-  test('should add item to cart by name and verify', async () => {
-    await testLink('QA-7');
-    await description('Verifies that a specific product can be added to the cart by its name.');
+  test('TC-024: should add multiple items to cart', async () => {
+    await testLink('TC-024');
+    await description('Verify that multiple different items can be added to the cart.');
 
-    const product = products.items[2];
-    await inventoryPage.addItemToCartByName(product.name);
+    await inventoryPage.addItemToCartByName(products.items[1].name);
+    await inventoryPage.addItemToCartByName(products.items[2].name);
+    await inventoryPage.addItemToCartByName(products.items[3].name);
+    await inventoryPage.verifyCartBadgeCount(3);
+    await inventoryPage.clickOnCartIcon();
+    await cartPage.verifyCartItemCount(3);
+  });
+
+  test('TC-025: should not add same item twice', async () => {
+    await testLink('TC-025');
+    await description('Verify that adding the same item twice does not duplicate it in cart.');
+
+    await inventoryPage.addItemToCartByName(products.items[4].name);
     await inventoryPage.verifyCartBadgeCount(1);
-    await inventoryPage.clickOnCartIcon();
-    await cartPage.verifyOnCartPage();
-    await cartPage.verifyCartItemCount(1);
-    await cartPage.verifyCartContainsItem(product.name);
-  });
-
-  test('should add multiple items to cart', async () => {
-    await testLink('QA-8');
-    await description('Verifies that multiple products can be added to the cart simultaneously.');
-
-    await inventoryPage.addFirstItemToCart();
-    await inventoryPage.verifyCartBadgeCount(1);
-    await inventoryPage.addItemToCartByIndex(2);
-    await inventoryPage.verifyCartBadgeCount(2);
-    await inventoryPage.clickOnCartIcon();
-    await cartPage.verifyOnCartPage();
-    await cartPage.verifyCartItemCount(2);
-  });
-
-  test('should add item to cart and verify item details', async () => {
-    await testLink('QA-9');
-    await description('Verifies that product details (name, price) are preserved when added to the cart.');
-
-    const itemName: string = await inventoryPage.getFirstItemName();
-    const itemPrice: string = await inventoryPage.getFirstItemPrice();
-    await inventoryPage.addFirstItemToCart();
-    await inventoryPage.clickOnCartIcon();
-    await cartPage.verifyOnCartPage();
-    await cartPage.verifyCartContainsItem(itemName);
-    await cartPage.verifyFirstCartItemPrice(itemPrice);
-  });
-});
-
-test.describe('Remove Item from Cart', () => {
-  test('should remove item from cart', async () => {
-    await story(allure.features.cartManagement.stories.removeFromCart);
-    await severity(Severity.CRITICAL);
-    await testLink('QA-10');
-    await description('Verifies that a product can be removed from the cart.');
-
-    await inventoryPage.addFirstItemToCart();
-    await inventoryPage.verifyCartBadgeCount(1);
-    await inventoryPage.clickOnCartIcon();
-    await cartPage.verifyOnCartPage();
-    await cartPage.removeItemButtonByIndex(0);
-    await cartPage.verifyCartIsEmpty();
+    // Button should change to Remove after adding
+    await inventoryPage.removeItemFromCartByName(products.items[4].name);
     await inventoryPage.verifyCartBadgeIsNotVisible();
   });
+
+  test('TC-037: should add item from product detail page', async () => {
+    await testLink('TC-037');
+    await description('Verify that an item can be added to cart from the product detail page.');
+
+    await inventoryPage.clickOnProductName(products.items[5].name);
+    await productDetailPage.verifyOnProductDetailPage();
+    await productDetailPage.clickOnAddToCartButton();
+    await inventoryPage.verifyCartBadgeCount(1);
+  });
+
 });
+
+test.describe(allure.features.cart.stories.removeFromCart, () => {
+  test.beforeEach(async () => {
+    await subSuite(allure.features.cart.stories.removeFromCart);
+    await story(allure.features.cart.stories.removeFromCart);
+    await severity(Severity.CRITICAL);
+  });
+
+  test('TC-026: should remove item from inventory page', async () => {
+    await testLink('TC-026');
+    await description('Verify that an item can be removed from cart while on inventory page.');
+
+    await inventoryPage.addItemToCartByName(products.items[1].name);
+    await inventoryPage.verifyCartBadgeCount(1);
+    await inventoryPage.removeItemFromCartByName(products.items[1].name);
+    await inventoryPage.verifyCartBadgeIsNotVisible();
+  });
+
+  test('TC-027: should remove item from cart page', async () => {
+    await testLink('TC-027');
+    await description('Verify that an item can be removed from the cart page.');
+
+    await inventoryPage.addItemToCartByName(products.items[2].name);
+    await inventoryPage.clickOnCartIcon();
+    await cartPage.verifyOnCartPage();
+    await cartPage.removeItemByName(products.items[2].name);
+    await cartPage.verifyCartIsEmpty();
+  });
+
+  test('TC-028: should remove all items from cart', async () => {
+    await testLink('TC-028');
+    await description('Verify that all items can be removed from the cart.');
+
+    await inventoryPage.addItemToCartByName(products.items[3].name);
+    await inventoryPage.addItemToCartByName(products.items[4].name);
+    await inventoryPage.clickOnCartIcon();
+    await cartPage.verifyCartItemCount(2);
+    await cartPage.removeItemByName(products.items[3].name);
+    await cartPage.removeItemByName(products.items[4].name);
+    await cartPage.verifyCartIsEmpty();
+  });
+
+});
+
+test.describe(allure.features.cart.stories.viewCart, () => {
+  test.beforeEach(async () => {
+    await subSuite(allure.features.cart.stories.viewCart);
+    await story(allure.features.cart.stories.viewCart);
+  });
+
+  test('TC-029: cart page shows all added items', async () => {
+    await severity(Severity.CRITICAL);
+    await testLink('TC-029');
+    await description('Cart page displays each item that was added from inventory.');
+
+    await inventoryPage.addItemToCartByName(products.items[0].name);
+    await inventoryPage.addItemToCartByName(products.items[5].name);
+    await inventoryPage.clickOnCartIcon();
+    await cartPage.verifyOnCartPage();
+    await cartPage.verifyCartContainsItem(products.items[0].name);
+    await cartPage.verifyCartContainsItem(products.items[5].name);
+  });
+
+  test('TC-030: cart badge reflects number of items added and removed', async () => {
+    await severity(Severity.NORMAL);
+    await testLink('TC-030');
+    await description('Cart badge shows 0 when empty, increments on add, decrements on remove.');
+
+    await inventoryPage.verifyCartBadgeIsNotVisible();
+    await inventoryPage.addItemToCartByName(products.items[2].name);
+    await inventoryPage.verifyCartBadgeCount(1);
+    await inventoryPage.addItemToCartByName(products.items[3].name);
+    await inventoryPage.verifyCartBadgeCount(2);
+    await inventoryPage.removeItemFromCartByName(products.items[2].name);
+    await inventoryPage.verifyCartBadgeCount(1);
+  });
+
+  test('TC-032: continue shopping button redirects to inventory page', async () => {
+    await severity(Severity.NORMAL);
+    await testLink('TC-032');
+    await description('Clicking Continue Shopping from cart redirects to inventory page.');
+
+    await inventoryPage.addItemToCartByName(products.items[4].name);
+    await inventoryPage.clickOnCartIcon();
+    await cartPage.verifyOnCartPage();
+    await cartPage.clickOnContinueShoppingButton();
+    await inventoryPage.verifyOnInventoryPage();
+  });
+
+  test('TC-033: checkout button redirects to checkout step one', async () => {
+    await severity(Severity.CRITICAL);
+    await testLink('TC-033');
+    await description('Clicking Checkout from cart redirects to checkout information page.');
+
+    await inventoryPage.addItemToCartByName(products.items[1].name);
+    await inventoryPage.clickOnCartIcon();
+    await cartPage.verifyOnCartPage();
+    await cartPage.clickOnCheckoutButton();
+    await checkoutPage.verifyOnCheckoutStepOne();
+  });
+
+  test('TC-035: cart page shows zero items when no products added', async () => {
+    await severity(Severity.NORMAL);
+    await testLink('TC-035');
+    await description('Cart page displays 0 items when user has not added any products.');
+
+    await inventoryPage.clickOnCartIcon();
+    await cartPage.verifyCartIsEmpty();
+  });
+
+  test('TC-036: cart shows 3 items when 3 products are added', async () => {
+    await severity(Severity.NORMAL);
+    await testLink('TC-036');
+    await description('Cart item count matches number of products added from inventory.');
+
+    await inventoryPage.addItemToCartByName(products.items[0].name);
+    await inventoryPage.addItemToCartByName(products.items[2].name);
+    await inventoryPage.addItemToCartByName(products.items[4].name);
+    await inventoryPage.clickOnCartIcon();
+    await cartPage.verifyCartItemCount(3);
+  });
+
+  test('TC-060: should verify item no longer in cart after removal', async () => {
+    await severity(Severity.NORMAL);
+    await testLink('TC-060');
+    await description('Verify that removed item is no longer displayed in cart.');
+
+    await inventoryPage.addItemToCartByName(products.items[3].name);
+    await inventoryPage.clickOnCartIcon();
+    await cartPage.verifyCartContainsItem(products.items[3].name);
+    await cartPage.removeItemByName(products.items[3].name);
+    await cartPage.verifyCartDoesNotContainItem(products.items[3].name);
+  });
+});
+
+test.describe(allure.features.cart.stories.cartPersistence, () => {
+  test.beforeEach(async () => {
+    await subSuite(allure.features.cart.stories.cartPersistence);
+    await story(allure.features.cart.stories.cartPersistence);
+  });
+
+  test('TC-031: should persist cart after logout and login', async () => {
+    await severity(Severity.NORMAL);
+    await testLink('TC-031');
+    await description('Verify that cart contents persist after logout and login.');
+
+    await inventoryPage.addItemToCartByName(products.items[5].name);
+    await inventoryPage.verifyCartBadgeCount(1);
+    await headerPage.logout();
+    await loginPage.verifyOnLoginPage();
+    await loginPage.login();
+    await inventoryPage.verifyOnInventoryPage();
+    await inventoryPage.verifyCartBadgeCount(1);
+  });
+});
+

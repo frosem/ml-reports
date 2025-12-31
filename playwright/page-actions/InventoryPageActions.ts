@@ -2,7 +2,7 @@
  * Inventory Page Actions
  */
 import { type Page } from '@playwright/test';
-import { allureStep, expect } from '@playwright-support/AllureTools';
+import { allureStep } from '@playwright-support/AllureTools';
 import { BasePage } from '@playwright-core/BasePage';
 import { inventoryPageObjects } from '@page-objects/InventoryPageObjects';
 import urls from '@fixtures/urls.json';
@@ -21,26 +21,10 @@ export class InventoryPageActions extends BasePage {
     const actualUrl = this.getCurrentUrl();
     await this.assert.attach(expectedUrl, actualUrl);
     await this.assert.url(expectedUrl, { errorMessage: `Should be on inventory page but got: ${actualUrl}` });
-
-    const itemCount = await this.getCount(this.page.getByTestId(inventoryPageObjects.inventoryItemContainerTestId));
-    await expect(itemCount, { label: 'product items', errorMessage: 'Inventory should have at least one item' }).toBeGreaterThan(0);
-  }
-
-  /**
-   * Add first item to cart
-   */
-  @allureStep()
-  async addFirstItemToCart(): Promise<void> {
-    await this.click(this.page.locator(inventoryPageObjects.addToCartButtonCSS()).first());
-  }
-
-  /**
-   * Add item to cart by index
-   * @param index - The index of the item to add
-   */
-  @allureStep('Add item to cart by index: {0}')
-  async addItemToCartByIndex(index: number): Promise<void> {
-    await this.click(this.page.locator(inventoryPageObjects.addToCartButtonCSSByIndex(index)));
+    await this.assert.visible(
+      this.page.getByTestId(inventoryPageObjects.inventoryItemContainerTestId).first(),
+      'Inventory should have at least one item'
+    );
   }
 
   /**
@@ -50,28 +34,6 @@ export class InventoryPageActions extends BasePage {
   @allureStep('Add item to cart: {0}')
   async addItemToCartByName(itemName: string): Promise<void> {
     await this.click(this.page.locator(inventoryPageObjects.addToCartButtonCSS(itemName)));
-  }
-
-  /**
-   * Get the name of the first inventory item
-   * @returns The item name
-   */
-  @allureStep()
-  async getFirstItemName(): Promise<string> {
-    return await this.getText(
-      this.page.getByTestId(inventoryPageObjects.inventoryItemNameContainerTestId).first()
-    );
-  }
-
-  /**
-   * Get the price of the first inventory item
-   * @returns The item price
-   */
-  @allureStep()
-  async getFirstItemPrice(): Promise<string> {
-    return await this.getText(
-      this.page.getByTestId(inventoryPageObjects.inventoryItemPriceContainerTestId).first()
-    );
   }
 
   /**
@@ -102,11 +64,111 @@ export class InventoryPageActions extends BasePage {
   }
 
   /**
-   * Get the number of items displayed on the inventory page
-   * @returns the items count
+   * Verify the number of items displayed on the inventory page
+   * @param expectedCount - Expected number of items
+   */
+  @allureStep('Verify item count: {0}')
+  async verifyItemCount(expectedCount: number): Promise<void> {
+    await this.assert.count(this.page.getByTestId(inventoryPageObjects.inventoryItemContainerTestId), expectedCount);
+  }
+
+  /**
+   * Click on product name to view details
+   * @param productName - The name of the product to click
+   */
+  @allureStep('View product: {0}')
+  async clickOnProductName(productName: string): Promise<void> {
+    await this.click(
+      this.page.getByTestId(inventoryPageObjects.inventoryItemNameContainerTestId).filter({ hasText: productName })
+    );
+  }
+
+  /**
+   * Sort products by option
+   * @param sortOption - The sort option value (az, za, lohi, hilo)
+   */
+  @allureStep('Sort products: {0}')
+  async sortProducts(sortOption: 'az' | 'hilo' | 'lohi' | 'za'): Promise<void> {
+    await this.page.getByTestId(inventoryPageObjects.sortDropdownTestId).selectOption(sortOption);
+  }
+
+  /**
+   * Get all product names in current order
+   * @returns Array of product names
    */
   @allureStep()
-  async getItemCount(): Promise<number> {
-    return await this.getCount(this.page.getByTestId(inventoryPageObjects.inventoryItemContainerTestId));
+  async getAllProductNames(): Promise<string[]> {
+    const names = this.page.getByTestId(inventoryPageObjects.inventoryItemNameContainerTestId);
+    return await names.allTextContents();
   }
+
+  /**
+   * Get all product prices in current order
+   * @returns Array of product prices
+   */
+  @allureStep()
+  async getAllProductPrices(): Promise<string[]> {
+    const prices = this.page.getByTestId(inventoryPageObjects.inventoryItemPriceContainerTestId);
+    return await prices.allTextContents();
+  }
+
+  /**
+   * Remove item from cart by name (from inventory page)
+   * @param itemName - The name of the item to remove
+   */
+  @allureStep('Remove from cart: {0}')
+  async removeItemFromCartByName(itemName: string): Promise<void> {
+    await this.click(this.page.locator(inventoryPageObjects.removeButtonCSS(itemName)));
+  }
+
+  /**
+   * Verify products are sorted alphabetically A-Z
+   */
+  @allureStep()
+  async verifyProductsSortedAZ(): Promise<void> {
+    const names = await this.getAllProductNames();
+    const sorted = [...names].sort((a, b) => a.localeCompare(b));
+    for (let i = 0; i < names.length; i++) {
+      await this.assert.attach(sorted[i], names[i]);
+    }
+  }
+
+  /**
+   * Verify products are sorted alphabetically Z-A
+   */
+  @allureStep()
+  async verifyProductsSortedZA(): Promise<void> {
+    const names = await this.getAllProductNames();
+    const sorted = [...names].sort((a, b) => b.localeCompare(a));
+    for (let i = 0; i < names.length; i++) {
+      await this.assert.attach(sorted[i], names[i]);
+    }
+  }
+
+  /**
+   * Verify products are sorted by price low to high
+   */
+  @allureStep()
+  async verifyProductsSortedPriceLowToHigh(): Promise<void> {
+    const prices = await this.getAllProductPrices();
+    const numericPrices = prices.map(p => parseFloat(p.replace('$', '')));
+    const sorted = [...numericPrices].sort((a, b) => a - b);
+    for (let i = 0; i < numericPrices.length; i++) {
+      await this.assert.attach(sorted[i].toString(), numericPrices[i].toString());
+    }
+  }
+
+  /**
+   * Verify products are sorted by price high to low
+   */
+  @allureStep()
+  async verifyProductsSortedPriceHighToLow(): Promise<void> {
+    const prices = await this.getAllProductPrices();
+    const numericPrices = prices.map(p => parseFloat(p.replace('$', '')));
+    const sorted = [...numericPrices].sort((a, b) => b - a);
+    for (let i = 0; i < numericPrices.length; i++) {
+      await this.assert.attach(sorted[i].toString(), numericPrices[i].toString());
+  }
+  }
+
 }
