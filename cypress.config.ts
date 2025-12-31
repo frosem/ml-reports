@@ -7,6 +7,7 @@ export default defineConfig({
     specPattern: 'cypress/e2e/**/*.specs.ts',
     setupNodeEvents(on, config) {
       allureCypress(on, config, getAllureConfig('cypress'));
+      require('@cypress/grep/src/plugin')(config);
       return config;
     },
   },

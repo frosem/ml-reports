@@ -24,6 +24,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@cypress/grep": "^5.0.1",
     "@playwright/test": "^1.57.0",
     "@testing-library/cypress": "^10.1.0",
     "@types/node": "^22.10.2",
