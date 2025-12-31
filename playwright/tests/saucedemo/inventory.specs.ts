@@ -27,13 +27,13 @@ test.beforeEach(async ({ page }) => {
   await inventoryPage.verifyOnInventoryPage();
 });
 
-test.describe(allure.features.inventory.stories.productDisplay, () => {
+test.describe(allure.features.inventory.stories.productDisplay, { tag: ['@inventory'] }, () => {
   test.beforeEach(async () => {
     await subSuite(allure.features.inventory.stories.productDisplay);
     await story(allure.features.inventory.stories.productDisplay);
   });
 
-  test('TC-013: should display all products on inventory page', async () => {
+  test('TC-013: should display all products on inventory page', { tag: ['@smoke', '@critical'] }, async () => {
     await severity(Severity.CRITICAL);
     await testLink('TC-013');
     await description('Verify that all 6 products are displayed on the inventory page.');
@@ -43,13 +43,13 @@ test.describe(allure.features.inventory.stories.productDisplay, () => {
 
 });
 
-test.describe(allure.features.inventory.stories.viewProductDetails, () => {
+test.describe(allure.features.inventory.stories.viewProductDetails, { tag: ['@inventory'] }, () => {
   test.beforeEach(async () => {
     await subSuite(allure.features.inventory.stories.viewProductDetails);
     await story(allure.features.inventory.stories.viewProductDetails);
   });
 
-  test('TC-014: should navigate to product detail page', async () => {
+  test('TC-014: should navigate to product detail page', { tag: ['@smoke', '@critical'] }, async () => {
     await severity(Severity.CRITICAL);
     await testLink('TC-014');
     await description('Verify that clicking on a product navigates to its detail page.');
@@ -58,7 +58,7 @@ test.describe(allure.features.inventory.stories.viewProductDetails, () => {
     await productDetailPage.verifyOnProductDetailPage();
   });
 
-  test('TC-016: should add product to cart from detail page', async () => {
+  test('TC-016: should add product to cart from detail page', { tag: ['@smoke', '@critical', '@cart'] }, async () => {
     await severity(Severity.CRITICAL);
     await testLink('TC-016');
     await description('Verify that a product can be added to cart from the detail page.');
@@ -70,7 +70,7 @@ test.describe(allure.features.inventory.stories.viewProductDetails, () => {
     await inventoryPage.verifyCartBadgeCount(1);
   });
 
-  test('TC-022: back to products button redirects to inventory page', async () => {
+  test('TC-022: back to products button redirects to inventory page', { tag: ['@regression', '@medium', '@navigation'] }, async () => {
     await severity(Severity.NORMAL);
     await testLink('TC-022');
     await description('Clicking Back to products from detail page redirects to inventory.');
@@ -81,7 +81,7 @@ test.describe(allure.features.inventory.stories.viewProductDetails, () => {
     await inventoryPage.verifyOnInventoryPage();
   });
 
-  test('TC-072: should remove item from detail page', async () => {
+  test('TC-072: should remove item from detail page', { tag: ['@regression', '@medium', '@cart'] }, async () => {
     await severity(Severity.NORMAL);
     await testLink('TC-072');
     await description('Verify that item can be removed from cart on product detail page.');
@@ -95,13 +95,13 @@ test.describe(allure.features.inventory.stories.viewProductDetails, () => {
 
 });
 
-test.describe(allure.features.inventory.stories.sortProducts, () => {
+test.describe(allure.features.inventory.stories.sortProducts, { tag: ['@inventory'] }, () => {
   test.beforeEach(async () => {
     await subSuite(allure.features.inventory.stories.sortProducts);
     await story(allure.features.inventory.stories.sortProducts);
   });
 
-  test('TC-017: should sort products A-Z', async () => {
+  test('TC-017: should sort products A-Z', { tag: ['@regression', '@medium'] }, async () => {
     await severity(Severity.NORMAL);
     await testLink('TC-017');
     await description('Verify that products can be sorted alphabetically A to Z.');
@@ -110,7 +110,7 @@ test.describe(allure.features.inventory.stories.sortProducts, () => {
     await inventoryPage.verifyProductsSortedAZ();
   });
 
-  test('TC-018: should sort products Z-A', async () => {
+  test('TC-018: should sort products Z-A', { tag: ['@regression', '@medium'] }, async () => {
     await severity(Severity.NORMAL);
     await testLink('TC-018');
     await description('Verify that products can be sorted alphabetically Z to A.');
@@ -119,7 +119,7 @@ test.describe(allure.features.inventory.stories.sortProducts, () => {
     await inventoryPage.verifyProductsSortedZA();
   });
 
-  test('TC-019: should sort products by price low to high', async () => {
+  test('TC-019: should sort products by price low to high', { tag: ['@regression', '@medium'] }, async () => {
     await severity(Severity.NORMAL);
     await testLink('TC-019');
     await description('Verify that products can be sorted by price from low to high.');
@@ -128,7 +128,7 @@ test.describe(allure.features.inventory.stories.sortProducts, () => {
     await inventoryPage.verifyProductsSortedPriceLowToHigh();
   });
 
-  test('TC-020: should sort products by price high to low', async () => {
+  test('TC-020: should sort products by price high to low', { tag: ['@regression', '@medium'] }, async () => {
     await severity(Severity.NORMAL);
     await testLink('TC-020');
     await description('Verify that products can be sorted by price from high to low.');
