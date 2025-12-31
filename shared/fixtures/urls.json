@@ -2,6 +2,10 @@
   "baseUrl": "https://www.saucedemo.com",
   "paths": {
     "cart": "/cart.html",
+    "checkoutComplete": "/checkout-complete.html",
+    "checkoutStepOne": "/checkout-step-one.html",
+    "checkoutStepTwo": "/checkout-step-two.html",
+    "inventoryItem": "/inventory-item.html",
     "inventory": "/inventory.html",
     "login": "/"
   }

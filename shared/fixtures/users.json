@@ -1,26 +1,39 @@
 {
-  "valid": {
-    "standard": {
-      "username": "standard_user",
-      "password": "secret_sauce"
-    },
-    "problem": {
-      "username": "problem_user",
-      "password": "secret_sauce"
-    },
-    "performance": {
-      "username": "performance_glitch_user",
-      "password": "secret_sauce"
-    }
+  "checkout": {
+    "firstName": "John",
+    "lastName": "Doe",
+    "postalCode": "12345"
   },
   "invalid": {
-    "wrongCredentials": {
-      "username": "invalid_user",
-      "password": "invalid_password"
-    },
     "lockedOut": {
-      "username": "locked_out_user",
-      "password": "secret_sauce"
+      "password": "secret_sauce",
+      "username": "locked_out_user"
+    },
+    "wrongCredentials": {
+      "password": "invalid_password",
+      "username": "invalid_user"
+    }
+  },
+  "valid": {
+    "error": {
+      "password": "secret_sauce",
+      "username": "error_user"
+    },
+    "performance": {
+      "password": "secret_sauce",
+      "username": "performance_glitch_user"
+    },
+    "problem": {
+      "password": "secret_sauce",
+      "username": "problem_user"
+    },
+    "standard": {
+      "password": "secret_sauce",
+      "username": "standard_user"
+    },
+    "visual": {
+      "password": "secret_sauce",
+      "username": "visual_user"
     }
   }
 }
