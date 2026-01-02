@@ -18,5 +18,7 @@ import '@testing-library/cypress/add-commands';
 import 'allure-cypress';
 import './commands';
 import { configure } from '@testing-library/cypress';
+import { register as registerCypressGrep } from '@cypress/grep';
 
 configure({ testIdAttribute: 'data-test' });
+registerCypressGrep();

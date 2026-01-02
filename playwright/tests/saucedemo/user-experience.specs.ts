@@ -29,7 +29,7 @@ test.beforeEach(async ({ page }) => {
   await inventoryPage.verifyOnInventoryPage();
 });
 
-test.describe(allure.features.navigation.stories.menuNavigation, () => {
+test.describe(allure.features.navigation.stories.menuNavigation, { tag: ['@navigation'] }, () => {
   test.beforeEach(async () => {
     await subSuite(allure.features.navigation.stories.menuNavigation);
     await feature(allure.features.navigation.name);
@@ -37,7 +37,7 @@ test.describe(allure.features.navigation.stories.menuNavigation, () => {
     await headerPage.verifyBurgerMenuButtonVisible();
   });
 
-  test('TC-048: hamburger menu toggles between open and closed states', async () => {
+  test('TC-048: hamburger menu toggles between open and closed states', { tag: ['@regression', '@medium'] }, async () => {
     await severity(Severity.NORMAL);
     await testLink('TC-048');
     await description('Verify that menu starts closed, opens when clicking burger icon, closes when clicking X.');
@@ -49,7 +49,7 @@ test.describe(allure.features.navigation.stories.menuNavigation, () => {
     await headerPage.verifyBurgerMenuIsClosed();
   });
 
-  test('TC-075: cart icon in header redirects to cart page', async () => {
+  test('TC-075: cart icon in header redirects to cart page', { tag: ['@smoke', '@high', '@cart'] }, async () => {
     await severity(Severity.NORMAL);
     await testLink('TC-075');
     await description('Clicking cart icon in header redirects to cart page.');
@@ -59,14 +59,14 @@ test.describe(allure.features.navigation.stories.menuNavigation, () => {
   });
 });
 
-test.describe(allure.features.appState.stories.resetState, () => {
+test.describe(allure.features.appState.stories.resetState, { tag: ['@navigation'] }, () => {
   test.beforeEach(async () => {
     await subSuite(allure.features.appState.stories.resetState);
     await feature(allure.features.appState.name);
     await story(allure.features.appState.stories.resetState);
   });
 
-  test('TC-049: should reset app state', async () => {
+  test('TC-049: should reset app state', { tag: ['@regression', '@medium'] }, async () => {
     await severity(Severity.NORMAL);
     await testLink('TC-049');
     await description('Verify that app state can be reset from the menu.');
@@ -81,14 +81,14 @@ test.describe(allure.features.appState.stories.resetState, () => {
   });
 });
 
-test.describe(allure.features.responsiveDesign.stories.mobileViewport, () => {
+test.describe(allure.features.responsiveDesign.stories.mobileViewport, { tag: ['@navigation'] }, () => {
   test.beforeEach(async () => {
     await subSuite(allure.features.responsiveDesign.stories.mobileViewport);
     await feature(allure.features.responsiveDesign.name);
     await story(allure.features.responsiveDesign.stories.mobileViewport);
   });
 
-  test('TC-050: mobile viewport displays inventory items and toggles menu', async ({ page }) => {
+  test('TC-050: mobile viewport displays inventory items and toggles menu', { tag: ['@regression', '@medium', '@mobile'] }, async ({ page }) => {
     await severity(Severity.NORMAL);
     await testLink('TC-050');
     await description('At iPhone 12/13 Pro viewport (390x844), inventory page shows items and menu opens/closes.');

@@ -26,8 +26,10 @@ test.beforeEach(async ({ page }) => {
   await loginPage.visitLoginPage();
 });
 
-test.describe(allure.features.authentication.stories.validLogin, () => {
-  test('TC-001: valid users redirect to inventory page after login', async () => {
+test.describe(allure.features.authentication.stories.validLogin, { tag: ['@auth'] }, () => {
+  test('TC-001: valid users redirect to inventory page after login',
+    { tag: ['@smoke', '@critical'] },
+    async () => {
     await subSuite(allure.features.authentication.stories.validLogin);
     await story(allure.features.authentication.stories.validLogin);
     await severity(Severity.CRITICAL);
@@ -49,14 +51,16 @@ test.describe(allure.features.authentication.stories.validLogin, () => {
   });
 });
 
-test.describe(allure.features.authentication.stories.invalidLogin, () => {
+test.describe(allure.features.authentication.stories.invalidLogin, { tag: ['@auth'] }, () => {
   test.beforeEach(async () => {
     await subSuite(allure.features.authentication.stories.invalidLogin);
     await story(allure.features.authentication.stories.invalidLogin);
     await severity(Severity.NORMAL);
   });
 
-  test('TC-006: should display error with wrong password', async () => {
+  test('TC-006: should display error with wrong password',
+    { tag: ['@regression', '@medium'] },
+    async () => {
     await testLink('TC-006');
     await description('Verify that login fails with correct username but wrong password.');
 
@@ -64,7 +68,9 @@ test.describe(allure.features.authentication.stories.invalidLogin, () => {
     await loginPage.verifyErrorMessage(messages.login.invalidCredentials);
   });
 
-  test('TC-007: should display error with wrong username', async () => {
+  test('TC-007: should display error with wrong username',
+    { tag: ['@regression', '@medium'] },
+    async () => {
     await testLink('TC-007');
     await description('Verify that login fails with incorrect username.');
 
@@ -72,7 +78,9 @@ test.describe(allure.features.authentication.stories.invalidLogin, () => {
     await loginPage.verifyErrorMessage(messages.login.invalidCredentials);
   });
 
-  test('TC-008: should display error with empty username', async () => {
+  test('TC-008: should display error with empty username',
+    { tag: ['@regression', '@medium'] },
+    async () => {
     await testLink('TC-008');
     await description('Verify that login fails when username is not provided.');
 
@@ -81,7 +89,9 @@ test.describe(allure.features.authentication.stories.invalidLogin, () => {
     await loginPage.verifyErrorMessage(messages.login.usernameRequired);
   });
 
-  test('TC-009: should display error with empty password', async () => {
+  test('TC-009: should display error with empty password',
+    { tag: ['@regression', '@medium'] },
+    async () => {
     await testLink('TC-009');
     await description('Verify that login fails when password is not provided.');
 
@@ -91,13 +101,15 @@ test.describe(allure.features.authentication.stories.invalidLogin, () => {
   });
 });
 
-test.describe(allure.features.authentication.stories.accountSecurity, () => {
+test.describe(allure.features.authentication.stories.accountSecurity, { tag: ['@auth'] }, () => {
   test.beforeEach(async () => {
     await subSuite(allure.features.authentication.stories.accountSecurity);
     await story(allure.features.authentication.stories.accountSecurity);
   });
 
-  test('TC-010: should block locked out user', async () => {
+  test('TC-010: should block locked out user',
+    { tag: ['@smoke', '@critical'] },
+    async () => {
     await severity(Severity.CRITICAL);
     await testLink('TC-010');
     await description('Verify that a locked out user cannot access the application.');
@@ -107,13 +119,15 @@ test.describe(allure.features.authentication.stories.accountSecurity, () => {
   });
 });
 
-test.describe(allure.features.authentication.stories.logout, () => {
+test.describe(allure.features.authentication.stories.logout, { tag: ['@auth'] }, () => {
   test.beforeEach(async () => {
     await subSuite(allure.features.authentication.stories.logout);
     await story(allure.features.authentication.stories.logout);
   });
 
-  test('TC-011: logout redirects to login page', async () => {
+  test('TC-011: logout redirects to login page',
+    { tag: ['@smoke', '@critical'] },
+    async () => {
     await severity(Severity.CRITICAL);
     await testLink('TC-011');
     await description('User is redirected to login page after clicking logout.');
@@ -126,13 +140,13 @@ test.describe(allure.features.authentication.stories.logout, () => {
   });
 });
 
-test.describe(allure.features.authentication.stories.sessionManagement, () => {
+test.describe(allure.features.authentication.stories.sessionManagement, { tag: ['@auth'] }, () => {
   test.beforeEach(async () => {
     await subSuite(allure.features.authentication.stories.sessionManagement);
     await story(allure.features.authentication.stories.sessionManagement);
   });
 
-  test('TC-012: should persist session after page refresh', async () => {
+  test('TC-012: should persist session after page refresh', { tag: ['@regression', '@medium'] }, async () => {
     await severity(Severity.NORMAL);
     await testLink('TC-012');
     await description('Verify that user session persists after refreshing the page.');

@@ -39,28 +39,60 @@ jobs:
       - name: Type check
         run: npm run typecheck
 
-  validate-frameworks:
-    name: Validate Frameworks
+  run-modified-tests:
+    name: Run Modified Tests
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get modified spec files
+        id: changed-specs
+        run: |
+          CYPRESS_SPECS=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E '^cypress/e2e/.*\.specs\.ts$' | tr '\n' ',' | sed 's/,$//' || true)
+          PLAYWRIGHT_SPECS=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E '^playwright/tests/.*\.specs\.ts$' | tr '\n' ' ' || true)
+
+          echo "cypress_specs=$CYPRESS_SPECS" >> $GITHUB_OUTPUT
+          echo "playwright_specs=$PLAYWRIGHT_SPECS" >> $GITHUB_OUTPUT
+
+          if [ -n "$CYPRESS_SPECS" ]; then
+            echo "has_cypress=true" >> $GITHUB_OUTPUT
+            echo "📝 Modified Cypress specs: $CYPRESS_SPECS"
+          else
+            echo "has_cypress=false" >> $GITHUB_OUTPUT
+          fi
+
+          if [ -n "$PLAYWRIGHT_SPECS" ]; then
+            echo "has_playwright=true" >> $GITHUB_OUTPUT
+            echo "📝 Modified Playwright specs: $PLAYWRIGHT_SPECS"
+          else
+            echo "has_playwright=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Setup Node.js
+        if: steps.changed-specs.outputs.has_cypress == 'true' || steps.changed-specs.outputs.has_playwright == 'true'
         uses: actions/setup-node@v4
         with:
           node-version-file: 'package.json'
           cache: 'npm'
 
       - name: Install dependencies
+        if: steps.changed-specs.outputs.has_cypress == 'true' || steps.changed-specs.outputs.has_playwright == 'true'
         run: npm ci
 
-      - name: Install and verify Cypress
+      - name: Run modified Cypress specs
+        if: steps.changed-specs.outputs.has_cypress == 'true'
         run: |
+          echo "🧪 Running Cypress specs: ${{ steps.changed-specs.outputs.cypress_specs }}"
           npm run cypress:install
-          npm run cypress:verify
+          npx cypress run --browser chrome --spec "${{ steps.changed-specs.outputs.cypress_specs }}" --env grepFilterSpecs=false
 
-      - name: Install and verify Playwright
+      - name: Run modified Playwright specs
+        if: steps.changed-specs.outputs.has_playwright == 'true'
         run: |
+          echo "🧪 Running Playwright specs: ${{ steps.changed-specs.outputs.playwright_specs }}"
           npm run playwright:install
-          npm run playwright:verify
+          npx playwright test ${{ steps.changed-specs.outputs.playwright_specs }}

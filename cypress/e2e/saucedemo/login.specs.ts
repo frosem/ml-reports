@@ -16,8 +16,8 @@ beforeEach(() => {
 
 describe(allure.parentSuite, () => {
   describe(allure.testSuites.authentication, () => {
-    describe('Sign In to the Store', () => {
-      it('should successfully login with valid credentials', () => {
+    describe('Sign In to the Store', { tags: ['@auth'] }, () => {
+      it('should successfully login with valid credentials', { tags: ['@smoke', '@critical'] }, () => {
         story(allure.features.authentication.stories.validLogin);
         severity(Severity.CRITICAL);
         testLink('QA-1');
@@ -31,7 +31,7 @@ describe(allure.parentSuite, () => {
       });
 
       describe('Blocked Sign In', () => {
-        it('should display error message with locked out user', () => {
+        it('should display error message with locked out user', { tags: ['@smoke', '@critical'] }, () => {
           story(allure.features.authentication.stories.accountSecurity);
           severity(Severity.CRITICAL);
           testLink('QA-5');
@@ -51,7 +51,7 @@ describe(allure.parentSuite, () => {
           severity(Severity.NORMAL);
         });
 
-        it('should display error message with invalid credentials', () => {
+        it('should display error message with invalid credentials', { tags: ['@regression', '@medium'] }, () => {
           testLink('QA-2');
           description('The application rejects sign-in attempts with incorrect username or password.');
 
@@ -62,7 +62,7 @@ describe(allure.parentSuite, () => {
           LoginPageActions.verifyErrorMessage(messages.login.invalidCredentials);
         });
 
-        it('should display error message with empty username', () => {
+        it('should display error message with empty username', { tags: ['@regression', '@medium'] }, () => {
           testLink('QA-3');
           description('The application requires a username to be entered before signing in.');
 
@@ -71,7 +71,7 @@ describe(allure.parentSuite, () => {
           LoginPageActions.verifyErrorMessage(messages.login.usernameRequired);
         });
 
-        it('should display error message with empty password', () => {
+        it('should display error message with empty password', { tags: ['@regression', '@medium'] }, () => {
           testLink('QA-4');
           description('The application requires a password to be entered before signing in.');
 

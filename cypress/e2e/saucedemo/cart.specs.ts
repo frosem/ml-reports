@@ -17,14 +17,14 @@ beforeEach(() => {
 });
 
 describe(allure.parentSuite, () => {
-  describe(allure.testSuites.cart, () => {
+  describe(allure.testSuites.cart, { tags: ['@cart'] }, () => {
     describe('Add Item to Cart', () => {
       beforeEach(() => {
         story(allure.features.cart.stories.addToCart);
         severity(Severity.CRITICAL);
       });
 
-      it('should add first item to cart and verify in cart', () => {
+      it('should add first item to cart and verify in cart', { tags: ['@smoke', '@critical'] }, () => {
         testLink('QA-6');
         description('Verifies that the first product can be added to the cart.');
 
@@ -39,7 +39,7 @@ describe(allure.parentSuite, () => {
         });
       });
 
-      it('should add item to cart by name and verify', () => {
+      it('should add item to cart by name and verify', { tags: ['@regression', '@high'] }, () => {
         testLink('QA-7');
         description('Verifies that a specific product can be added to the cart by its name.');
 
@@ -52,7 +52,7 @@ describe(allure.parentSuite, () => {
         CartPageActions.verifyCartContainsItem(product.name);
       });
 
-      it('should add multiple items to cart', () => {
+      it('should add multiple items to cart', { tags: ['@regression', '@high'] }, () => {
         testLink('QA-8');
         description('Verifies that multiple products can be added to the cart simultaneously.');
 
@@ -65,7 +65,7 @@ describe(allure.parentSuite, () => {
         CartPageActions.verifyCartItemCount(2);
       });
 
-      it('should add item to cart and verify item details', () => {
+      it('should add item to cart and verify item details', { tags: ['@regression', '@medium'] }, () => {
         testLink('QA-9');
         description('Verifies that product details (name, price) are preserved when added to the cart.');
 
@@ -84,7 +84,7 @@ describe(allure.parentSuite, () => {
     });
 
     describe('Remove Item from Cart', () => {
-      it('should remove item from cart', () => {
+      it('should remove item from cart', { tags: ['@smoke', '@critical'] }, () => {
         story(allure.features.cart.stories.removeFromCart);
         severity(Severity.CRITICAL);
         testLink('QA-10');

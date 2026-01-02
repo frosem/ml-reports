@@ -36,14 +36,14 @@ test.beforeEach(async ({ page }) => {
   await inventoryPage.verifyOnInventoryPage();
 });
 
-test.describe(allure.features.cart.stories.addToCart, () => {
+test.describe(allure.features.cart.stories.addToCart, { tag: ['@cart'] }, () => {
   test.beforeEach(async () => {
     await subSuite(allure.features.cart.stories.addToCart);
     await story(allure.features.cart.stories.addToCart);
     await severity(Severity.CRITICAL);
   });
 
-  test('TC-023: should add single item to cart', async () => {
+  test('TC-023: should add single item to cart', { tag: ['@smoke', '@critical'] }, async () => {
     await testLink('TC-023');
     await description('Verify that a single item can be added to the cart.');
 
@@ -54,7 +54,7 @@ test.describe(allure.features.cart.stories.addToCart, () => {
     await cartPage.verifyCartContainsItem(products.items[0].name);
   });
 
-  test('TC-024: should add multiple items to cart', async () => {
+  test('TC-024: should add multiple items to cart', { tag: ['@regression', '@high'] }, async () => {
     await testLink('TC-024');
     await description('Verify that multiple different items can be added to the cart.');
 
@@ -67,7 +67,7 @@ test.describe(allure.features.cart.stories.addToCart, () => {
     await cartPage.verifyCartItemCount(itemsToAdd.length);
   });
 
-  test('TC-025: should not add same item twice', async () => {
+  test('TC-025: should not add same item twice', { tag: ['@regression', '@medium'] }, async () => {
     await testLink('TC-025');
     await description('Verify that adding the same item twice does not duplicate it in cart.');
 
@@ -78,7 +78,7 @@ test.describe(allure.features.cart.stories.addToCart, () => {
     await cartPage.verifyCartItemCount(1);
   });
 
-  test('TC-037: should add item from product detail page', async () => {
+  test('TC-037: should add item from product detail page', { tag: ['@regression', '@high', '@inventory'] }, async () => {
     await testLink('TC-037');
     await description('Verify that an item can be added to cart from the product detail page.');
 
@@ -90,14 +90,14 @@ test.describe(allure.features.cart.stories.addToCart, () => {
 
 });
 
-test.describe(allure.features.cart.stories.removeFromCart, () => {
+test.describe(allure.features.cart.stories.removeFromCart, { tag: ['@cart'] }, () => {
   test.beforeEach(async () => {
     await subSuite(allure.features.cart.stories.removeFromCart);
     await story(allure.features.cart.stories.removeFromCart);
     await severity(Severity.CRITICAL);
   });
 
-  test('TC-026: should remove item from inventory page', async () => {
+  test('TC-026: should remove item from inventory page', { tag: ['@smoke', '@critical'] }, async () => {
     await testLink('TC-026');
     await description('Verify that an item can be removed from cart while on inventory page.');
 
@@ -107,7 +107,7 @@ test.describe(allure.features.cart.stories.removeFromCart, () => {
     await inventoryPage.verifyCartBadgeIsNotVisible();
   });
 
-  test('TC-027: should remove item from cart page', async () => {
+  test('TC-027: should remove item from cart page', { tag: ['@smoke', '@critical'] }, async () => {
     await testLink('TC-027');
     await description('Verify that an item can be removed from the cart page.');
 
@@ -118,7 +118,7 @@ test.describe(allure.features.cart.stories.removeFromCart, () => {
     await cartPage.verifyCartIsEmpty();
   });
 
-  test('TC-028: should remove all items from cart', async () => {
+  test('TC-028: should remove all items from cart', { tag: ['@regression', '@high'] }, async () => {
     await testLink('TC-028');
     await description('Verify that all items can be removed from the cart.');
 
@@ -136,13 +136,13 @@ test.describe(allure.features.cart.stories.removeFromCart, () => {
 
 });
 
-test.describe(allure.features.cart.stories.viewCart, () => {
+test.describe(allure.features.cart.stories.viewCart, { tag: ['@cart'] }, () => {
   test.beforeEach(async () => {
     await subSuite(allure.features.cart.stories.viewCart);
     await story(allure.features.cart.stories.viewCart);
   });
 
-  test('TC-029: cart page shows all added items', async () => {
+  test('TC-029: cart page shows all added items', { tag: ['@smoke', '@critical'] }, async () => {
     await severity(Severity.CRITICAL);
     await testLink('TC-029');
     await description('Cart page displays each item that was added from inventory.');
@@ -155,7 +155,7 @@ test.describe(allure.features.cart.stories.viewCart, () => {
     await cartPage.verifyCartContainsItem(products.items[5].name);
   });
 
-  test('TC-030: cart badge reflects number of items added and removed', async () => {
+  test('TC-030: cart badge reflects number of items added and removed', { tag: ['@regression', '@medium'] }, async () => {
     await severity(Severity.NORMAL);
     await testLink('TC-030');
     await description('Cart badge shows 0 when empty, increments on add, decrements on remove.');
@@ -169,7 +169,7 @@ test.describe(allure.features.cart.stories.viewCart, () => {
     await inventoryPage.verifyCartBadgeCount(1);
   });
 
-  test('TC-032: continue shopping button redirects to inventory page', async () => {
+  test('TC-032: continue shopping button redirects to inventory page', { tag: ['@regression', '@medium', '@navigation'] }, async () => {
     await severity(Severity.NORMAL);
     await testLink('TC-032');
     await description('Clicking Continue Shopping from cart redirects to inventory page.');
@@ -181,7 +181,7 @@ test.describe(allure.features.cart.stories.viewCart, () => {
     await inventoryPage.verifyOnInventoryPage();
   });
 
-  test('TC-033: checkout button redirects to checkout step one', async () => {
+  test('TC-033: checkout button redirects to checkout step one', { tag: ['@smoke', '@critical', '@checkout'] }, async () => {
     await severity(Severity.CRITICAL);
     await testLink('TC-033');
     await description('Clicking Checkout from cart redirects to checkout information page.');
@@ -193,7 +193,7 @@ test.describe(allure.features.cart.stories.viewCart, () => {
     await checkoutPage.verifyOnCheckoutStepOne();
   });
 
-  test('TC-035: cart page shows zero items when no products added', async () => {
+  test('TC-035: cart page shows zero items when no products added', { tag: ['@regression', '@low'] }, async () => {
     await severity(Severity.NORMAL);
     await testLink('TC-035');
     await description('Cart page displays 0 items when user has not added any products.');
@@ -202,7 +202,7 @@ test.describe(allure.features.cart.stories.viewCart, () => {
     await cartPage.verifyCartIsEmpty();
   });
 
-  test('TC-036: cart shows 3 items when 3 products are added', async () => {
+  test('TC-036: cart shows 3 items when 3 products are added', { tag: ['@regression', '@medium'] }, async () => {
     await severity(Severity.NORMAL);
     await testLink('TC-036');
     await description('Cart item count matches number of products added from inventory.');
@@ -214,7 +214,7 @@ test.describe(allure.features.cart.stories.viewCart, () => {
     await cartPage.verifyCartItemCount(3);
   });
 
-  test('TC-060: should verify item no longer in cart after removal', async () => {
+  test('TC-060: should verify item no longer in cart after removal', { tag: ['@regression', '@medium'] }, async () => {
     await severity(Severity.NORMAL);
     await testLink('TC-060');
     await description('Verify that removed item is no longer displayed in cart.');
@@ -227,13 +227,13 @@ test.describe(allure.features.cart.stories.viewCart, () => {
   });
 });
 
-test.describe(allure.features.cart.stories.cartPersistence, () => {
+test.describe(allure.features.cart.stories.cartPersistence, { tag: ['@cart'] }, () => {
   test.beforeEach(async () => {
     await subSuite(allure.features.cart.stories.cartPersistence);
     await story(allure.features.cart.stories.cartPersistence);
   });
 
-  test('TC-031: should persist cart after logout and login', async () => {
+  test('TC-031: should persist cart after logout and login', { tag: ['@regression', '@high', '@auth'] }, async () => {
     await severity(Severity.NORMAL);
     await testLink('TC-031');
     await description('Verify that cart contents persist after logout and login.');

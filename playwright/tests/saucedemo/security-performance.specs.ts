@@ -27,7 +27,7 @@ test.describe(allure.features.security.stories.protectedRoutes, () => {
     await story(allure.features.security.stories.protectedRoutes);
   });
 
-  test('TC-051: should redirect to login when accessing inventory page directly', async ({ page }) => {
+  test('TC-051: should redirect to login when accessing inventory page directly', { tag: ['@smoke', '@critical', '@auth'] }, async ({ page }) => {
     await severity(Severity.CRITICAL);
     await testLink('TC-051');
     await description('Verify that accessing inventory page without login redirects to login page.');
@@ -43,7 +43,7 @@ test.describe(allure.features.performance.stories.pageLoadTime, () => {
     await story(allure.features.performance.stories.pageLoadTime);
   });
 
-  test('TC-052: should load performance inventory page within acceptable time', async () => {
+  test('TC-052: should load performance inventory page within acceptable time', { tag: ['@regression', '@medium', '@slow'] }, async () => {
     test.slow();
     await severity(Severity.NORMAL);
     await testLink('TC-052');
