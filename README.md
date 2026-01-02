@@ -70,6 +70,26 @@ npm run playwright:test       # Run tests, output results to allure-results/play
 npm run playwright:allure     # Run tests, generate report, open in browser
 ```
 
+### Running Tests with Tags
+
+Filter tests by priority (`@critical`, `@high`, `@medium`, `@low`), type (`@smoke`, `@regression`), or feature (`@auth`, `@cart`, `@checkout`, etc.).
+
+**Cypress**
+
+```bash
+npx cypress run --env grepTags="@critical"         # Single tag
+npx cypress run --env grepTags="@critical @high"   # Tests with either tag
+npx cypress run --env grepTags="@critical+@high"   # Tests with both tags
+```
+
+**Playwright**
+
+```bash
+npx playwright test --grep "@critical"                  # Single tag
+npx playwright test --grep "@critical|@high"            # Tests with either tag
+npx playwright test --grep "(?=.*@critical)(?=.*@high)" # Tests with both tags
+```
+
 ---
 
 ## 📊 Allure Reports
