@@ -1,0 +1,371 @@
+name: Shared E2E Workflow
+
+on:
+  workflow_call:
+    inputs:
+      framework:
+        description: 'Test framework (playwright or cypress)'
+        required: true
+        type: string
+      tags:
+        description: 'Tags to filter tests (use "all" to run everything)'
+        required: false
+        type: string
+        default: 'all'
+      deploy_dir:
+        description: 'Reports Deployment directory'
+        required: true
+        type: string
+      create_bug_reports:
+        description: 'Create bug reports in Jira for failed tests'
+        required: false
+        type: boolean
+        default: false
+      show_permanent_link:
+        description: 'Show permanent link in summary'
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      JIRA_API_TOKEN:
+        required: false
+      JIRA_BASE_URL:
+        required: false
+      JIRA_PROJECT_KEY:
+        required: false
+      JIRA_USER_EMAIL:
+        required: false
+
+env:
+  BRANCH_NAME: ${{ github.ref_name }}
+  FRAMEWORK: ${{ inputs.framework }}
+  RUN_ID: ${{ github.run_id }}
+
+jobs:
+  setup:
+    name: Setup Configuration
+    runs-on: ubuntu-latest
+    outputs:
+      node-version: ${{ steps.get-node-version.outputs.node_version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get Node version from package.json
+        id: get-node-version
+        run: |
+          set -e
+          if [ ! -f package.json ]; then
+            echo "Error: package.json file not found"
+            exit 1
+          fi
+          NODE_VERSION=$(jq -r '.engines.node' package.json)
+          if [ -z "$NODE_VERSION" ] || [ "$NODE_VERSION" = "null" ]; then
+            echo "Error: engines.node not found in package.json"
+            exit 1
+          fi
+          echo "node_version=$NODE_VERSION" >> $GITHUB_OUTPUT
+          echo "Detected Node version: $NODE_VERSION"
+
+  test:
+    name: Run ${{ inputs.framework }} tests
+    runs-on: ubuntu-latest
+    needs: setup
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ needs.setup.outputs.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate tags exist
+        if: ${{ inputs.tags != '' && inputs.tags != 'all' }}
+        run: |
+          FRAMEWORK="${{ inputs.framework }}"
+          TAGS="${{ inputs.tags }}"
+          
+          # Set test directory and tag pattern based on framework
+          if [ "$FRAMEWORK" == "playwright" ]; then
+            TEST_DIR="playwright/tests"
+            TAG_PATTERN="tag:\s*\["
+          else
+            TEST_DIR="cypress/e2e"
+            TAG_PATTERN="tags:\s*\["
+          fi
+          
+          # Get all available tags from test files (only from tag definitions)
+          AVAILABLE_TAGS=$(grep -rhE "$TAG_PATTERN" "$TEST_DIR" | grep -oE "'@[a-zA-Z]+'" | tr -d "'" | sort -u | tr '\n' ' ')
+          echo "Available tags for $FRAMEWORK: $AVAILABLE_TAGS"
+          
+          # Check each input tag
+          MISSING_TAGS=""
+          IFS=',' read -ra TAG_ARRAY <<< "$TAGS"
+          for tag in "${TAG_ARRAY[@]}"; do
+            tag=$(echo "$tag" | xargs)  # trim whitespace
+            if ! echo "$AVAILABLE_TAGS" | grep -qw "@$tag"; then
+              MISSING_TAGS="$MISSING_TAGS $tag"
+            fi
+          done
+          
+          # If any tags are missing, fail with helpful message
+          if [ -n "$MISSING_TAGS" ]; then
+            echo ""
+            echo "❌ Error: The following tags were not found:$MISSING_TAGS"
+            echo ""
+            echo "Available tags for $FRAMEWORK:"
+            echo "$AVAILABLE_TAGS" | tr ' ' '\n' | grep -v '^$' | sort -u | sed 's/^/  /'
+            echo ""
+            exit 1
+          fi
+          
+          echo "✅ All tags validated successfully"
+
+      - name: Install Playwright browsers
+        if: ${{ inputs.framework == 'playwright' }}
+        run: npx playwright install --with-deps chromium
+
+      # Run tests - with or without tag filtering
+      - name: Run Playwright tests
+        id: playwright-tests
+        if: ${{ inputs.framework == 'playwright' }}
+        continue-on-error: true
+        run: |
+          TAGS="${{ inputs.tags }}"
+          if [ -n "$TAGS" ] && [ "$TAGS" != "all" ]; then
+            GREP_PATTERN=$(echo "$TAGS" | sed 's/,/|@/g' | sed 's/^/@/')
+            npx playwright test --project="chromium" --grep "$GREP_PATTERN"
+          else
+            npm run playwright:test
+          fi
+
+      - name: Run Cypress tests
+        id: cypress-tests
+        if: ${{ inputs.framework == 'cypress' }}
+        continue-on-error: true
+        run: |
+          TAGS="${{ inputs.tags }}"
+          if [ -n "$TAGS" ] && [ "$TAGS" != "all" ]; then
+            GREP_TAGS=$(echo "$TAGS" | sed 's/,/ @/g' | sed 's/^/@/')
+            npx cypress run --browser chrome --env grepTags="$GREP_TAGS"
+          else
+            npm run cypress:test
+          fi
+
+      - name: Get previous Allure history
+        uses: actions/checkout@v4
+        if: always()
+        continue-on-error: true
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Copy previous history
+        if: always()
+        run: |
+          SANITIZED_BRANCH=$(echo "${{ env.BRANCH_NAME }}" | sed 's/\//-/g')
+          FRAMEWORK="${{ inputs.framework }}"
+          DEPLOY_DIR="${{ inputs.deploy_dir }}"
+          HISTORY_DIR="gh-pages/${DEPLOY_DIR}/${SANITIZED_BRANCH}/${FRAMEWORK}"
+          
+          if [ -d "$HISTORY_DIR" ]; then
+            # For on-demand, get history from latest run directory
+            if [ "$DEPLOY_DIR" == "on-demand" ]; then
+              LATEST_RUN=$(find "$HISTORY_DIR" -maxdepth 1 -type d -name '[0-9]*' | sort -n | tail -1)
+              if [ -n "$LATEST_RUN" ] && [ -d "$LATEST_RUN/history" ]; then
+                mkdir -p "allure-results/${FRAMEWORK}/history"
+                cp -r "$LATEST_RUN/history"/* "allure-results/${FRAMEWORK}/history/" 2>/dev/null || true
+                echo "Copied history from: $LATEST_RUN"
+              fi
+            else
+              # For allure-report, get history from root
+              if [ -d "$HISTORY_DIR/history" ]; then
+                mkdir -p "allure-results/${FRAMEWORK}/history"
+                cp -r "$HISTORY_DIR/history"/* "allure-results/${FRAMEWORK}/history/" 2>/dev/null || true
+                echo "Copied ${FRAMEWORK} history from previous report"
+              else
+                echo "No previous ${FRAMEWORK} history found"
+              fi
+            fi
+          fi
+
+      - name: Generate Allure Report
+        if: always()
+        run: npm run allure:generate -- ${{ inputs.framework }}
+
+      - name: Upload Allure Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-${{ inputs.framework }}
+          path: allure-results/${{ inputs.framework }}/
+          retention-days: 30
+
+      - name: Upload Allure Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-report-${{ inputs.framework }}
+          path: allure-report/${{ inputs.framework }}/
+          retention-days: 30
+
+      - name: Upload Cypress artifacts
+        if: ${{ inputs.framework == 'cypress' && always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-artifacts
+          path: |
+            cypress/screenshots/
+            cypress/videos/
+          retention-days: 7
+
+      - name: Create bug reports in Jira
+        id: jira
+        if: ${{ (failure() || steps.playwright-tests.outcome == 'failure' || steps.cypress-tests.outcome == 'failure') && inputs.create_bug_reports == true }}
+        env:
+          ALLURE_RESULTS_DIR: ./allure-results/${{ inputs.framework }}
+          GITHUB_BRANCH: ${{ github.ref_name }}
+          GITHUB_COMMIT_SHA: ${{ github.sha }}
+          GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+        run: npm run jira:create-bugs
+
+      # Deployment
+      - name: Sanitize branch name
+        id: sanitize
+        if: always()
+        run: |
+          SANITIZED_BRANCH=$(echo "${{ env.BRANCH_NAME }}" | sed 's/\//-/g')
+          echo "branch=$SANITIZED_BRANCH" >> $GITHUB_OUTPUT
+
+      - name: Prepare deployment structure
+        id: deploy-prep
+        if: always()
+        run: |
+          SANITIZED_BRANCH="${{ steps.sanitize.outputs.branch }}"
+          FRAMEWORK="${{ inputs.framework }}"
+          RUN_ID="${{ env.RUN_ID }}"
+          DEPLOY_DIR="${{ inputs.deploy_dir }}"
+          ROOT_PATH="gh-pages/${DEPLOY_DIR}/${SANITIZED_BRANCH}/${FRAMEWORK}"
+
+          mkdir -p deploy-package
+
+          # Deploy to {branch}/{framework}/{run-id}
+          mkdir -p "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/${RUN_ID}"
+          cp -r "allure-report/${FRAMEWORK}"/* "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/${RUN_ID}/"
+          echo "✅ Report deployed to: ${SANITIZED_BRANCH}/${FRAMEWORK}/${RUN_ID}"
+
+          # For permanent links, also deploy to root
+          if [ "${{ inputs.show_permanent_link }}" == "true" ]; then
+            cp -r "allure-report/${FRAMEWORK}"/* "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/"
+            echo "✅ Root path updated with latest report"
+          fi
+
+          # Find previous run ID
+          if [ -d "${ROOT_PATH}" ]; then
+            PREVIOUS_RUN_ID=$(find "${ROOT_PATH}" -maxdepth 1 -type d -name '[0-9]*' | sort -n | tail -1 | xargs basename 2>/dev/null || echo "")
+            if [ -n "$PREVIOUS_RUN_ID" ]; then
+              echo "previous_run_id=${PREVIOUS_RUN_ID}" >> $GITHUB_OUTPUT
+              echo "📂 Found previous run: ${PREVIOUS_RUN_ID}"
+            fi
+          fi
+
+      - name: Deploy to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          destination_dir: ${{ inputs.deploy_dir }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          keep_files: true
+          publish_dir: ./deploy-package
+
+      # Summary
+      - name: Test Summary
+        if: always()
+        run: |
+          SANITIZED_BRANCH="${{ steps.sanitize.outputs.branch }}"
+          BASE_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ inputs.deploy_dir }}"
+          FRAMEWORK="${{ inputs.framework }}"
+          TAGS="${{ inputs.tags }}"
+          PREVIOUS_RUN_ID="${{ steps.deploy-prep.outputs.previous_run_id }}"
+          SHOW_PERMANENT="${{ inputs.show_permanent_link }}"
+          CREATE_BUGS="${{ inputs.create_bug_reports }}"
+
+          # Determine test outcome
+          if [ "$FRAMEWORK" == "playwright" ]; then
+            TEST_OUTCOME="${{ steps.playwright-tests.outcome }}"
+          else
+            TEST_OUTCOME="${{ steps.cypress-tests.outcome }}"
+          fi
+
+          # Framework badges
+          if [ "$FRAMEWORK" == "cypress" ]; then
+            FRAMEWORK_ICON='<img src="https://www.cypress.io/favicon.svg" alt="Cypress" width="20" height="20" />'
+            FRAMEWORK_BADGE='![Cypress](https://img.shields.io/badge/-Cypress-69D3A7?logo=cypress&logoColor=white&style=flat-square)'
+          else
+            FRAMEWORK_ICON='<img src="https://playwright.dev/img/playwright-logo.svg" alt="Playwright" width="20" height="20" />'
+            FRAMEWORK_BADGE='![Playwright](https://img.shields.io/badge/-Playwright-2EAD33?style=flat-square)'
+          fi
+          ALLURE_BADGE='![Allure](https://img.shields.io/badge/Allure-Reports-FF5722?style=flat-square)'
+
+          # Header
+          if [ -n "$TAGS" ] && [ "$TAGS" != "all" ]; then
+            echo "# 🧪 Tests on Demand" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "# 📊 E2E Test Reports" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "${FRAMEWORK_BADGE} ${ALLURE_BADGE}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Info table
+          echo "| | |" >> $GITHUB_STEP_SUMMARY
+          echo "|:--|:--|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Framework** | ${FRAMEWORK_ICON} \`${FRAMEWORK}\` |" >> $GITHUB_STEP_SUMMARY
+          if [ -n "$TAGS" ] && [ "$TAGS" != "all" ]; then
+            echo "| **Tags** | \`${TAGS}\` |" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "| **Branch** | \`${{ env.BRANCH_NAME }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Status
+          if [ "$TEST_OUTCOME" == "success" ]; then
+            echo "> ✅ **All tests passed!**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "> ❌ **Some tests failed.** Check the report for details." >> $GITHUB_STEP_SUMMARY
+            if [ "$CREATE_BUGS" == "true" ]; then
+              ISSUE_LINKS="${{ steps.jira.outputs.issue_links }}"
+              if [ -n "$ISSUE_LINKS" ]; then
+                echo ">" >> $GITHUB_STEP_SUMMARY
+                echo "> 📋 **Bug reports created in Jira:** ${ISSUE_LINKS}" >> $GITHUB_STEP_SUMMARY
+              fi
+            fi
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Report links
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          ALLURE_ICON='<img src="https://avatars.githubusercontent.com/u/5879127" alt="Allure" width="20" height="20" />'
+          echo "## ${ALLURE_ICON} Report Links" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> 🔗 [Report for this run](${BASE_URL}/${SANITIZED_BRANCH}/${FRAMEWORK}/${{ env.RUN_ID }})" >> $GITHUB_STEP_SUMMARY
+          echo ">" >> $GITHUB_STEP_SUMMARY
+
+          if [ -n "$PREVIOUS_RUN_ID" ]; then
+            echo "> 📂 [Report for previous run](${BASE_URL}/${SANITIZED_BRANCH}/${FRAMEWORK}/${PREVIOUS_RUN_ID})" >> $GITHUB_STEP_SUMMARY
+            echo ">" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "$SHOW_PERMANENT" == "true" ]; then
+            echo "> 📊 [Latest report (permanent link)](${BASE_URL}/${SANITIZED_BRANCH}/${FRAMEWORK})" >> $GITHUB_STEP_SUMMARY
+          fi
+
