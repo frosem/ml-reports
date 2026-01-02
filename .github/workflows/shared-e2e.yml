@@ -85,6 +85,7 @@ jobs:
         run: npm ci
 
       - name: Validate tags exist
+        id: validate-tags
         if: ${{ inputs.tags != '' && inputs.tags != 'all' }}
         run: |
           FRAMEWORK="${{ inputs.framework }}"
@@ -167,14 +168,14 @@ jobs:
 
       - name: Get previous Allure history
         uses: actions/checkout@v4
-        if: always()
+        if: always() && steps.validate-tags.outcome != 'failure'
         continue-on-error: true
         with:
           ref: gh-pages
           path: gh-pages
 
       - name: Copy previous history
-        if: always()
+        if: always() && steps.validate-tags.outcome != 'failure'
         run: |
           SANITIZED_BRANCH=$(echo "${{ env.BRANCH_NAME }}" | sed 's/\//-/g')
           FRAMEWORK="${{ inputs.framework }}"
@@ -203,11 +204,11 @@ jobs:
           fi
 
       - name: Generate Allure Report
-        if: always()
+        if: always() && steps.validate-tags.outcome != 'failure'
         run: npm run allure:generate -- ${{ inputs.framework }}
 
       - name: Upload Allure Results
-        if: always()
+        if: always() && steps.validate-tags.outcome != 'failure'
         uses: actions/upload-artifact@v4
         with:
           name: allure-results-${{ inputs.framework }}
@@ -215,7 +216,7 @@ jobs:
           retention-days: 30
 
       - name: Upload Allure Report
-        if: always()
+        if: always() && steps.validate-tags.outcome != 'failure'
         uses: actions/upload-artifact@v4
         with:
           name: allure-report-${{ inputs.framework }}
@@ -223,7 +224,7 @@ jobs:
           retention-days: 30
 
       - name: Upload Cypress artifacts
-        if: ${{ inputs.framework == 'cypress' && always() }}
+        if: inputs.framework == 'cypress' && always() && steps.validate-tags.outcome != 'failure'
         uses: actions/upload-artifact@v4
         with:
           name: cypress-artifacts
@@ -249,14 +250,14 @@ jobs:
       # Deployment
       - name: Sanitize branch name
         id: sanitize
-        if: always()
+        if: always() && steps.validate-tags.outcome != 'failure'
         run: |
           SANITIZED_BRANCH=$(echo "${{ env.BRANCH_NAME }}" | sed 's/\//-/g')
           echo "branch=$SANITIZED_BRANCH" >> $GITHUB_OUTPUT
 
       - name: Prepare deployment structure
         id: deploy-prep
-        if: always()
+        if: always() && steps.validate-tags.outcome != 'failure'
         run: |
           SANITIZED_BRANCH="${{ steps.sanitize.outputs.branch }}"
           FRAMEWORK="${{ inputs.framework }}"
@@ -287,7 +288,7 @@ jobs:
           fi
 
       - name: Deploy to GitHub Pages
-        if: always()
+        if: always() && steps.validate-tags.outcome != 'failure'
         uses: peaceiris/actions-gh-pages@v3
         with:
           destination_dir: ${{ inputs.deploy_dir }}
@@ -296,8 +297,36 @@ jobs:
           publish_dir: ./deploy-package
 
       # Summary
+      - name: Tags Not Found
+        if: always() && steps.validate-tags.outcome == 'failure'
+        run: |
+          FRAMEWORK="${{ inputs.framework }}"
+          TAGS="${{ inputs.tags }}"
+
+          if [ "$FRAMEWORK" == "cypress" ]; then
+            FRAMEWORK_ICON='<img src="https://www.cypress.io/favicon.svg" alt="Cypress" width="20" height="20" />'
+            FRAMEWORK_BADGE='![Cypress](https://img.shields.io/badge/-Cypress-69D3A7?logo=cypress&logoColor=white&style=flat-square)'
+          else
+            FRAMEWORK_ICON='<img src="https://playwright.dev/img/playwright-logo.svg" alt="Playwright" width="20" height="20" />'
+            FRAMEWORK_BADGE='![Playwright](https://img.shields.io/badge/-Playwright-2EAD33?style=flat-square)'
+          fi
+
+          echo "# ⚠️ Tags Not Found" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "${FRAMEWORK_BADGE}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| | |" >> $GITHUB_STEP_SUMMARY
+          echo "|:--|:--|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Framework** | ${FRAMEWORK_ICON} \`${FRAMEWORK}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Requested Tags** | \`${TAGS}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Branch** | \`${{ env.BRANCH_NAME }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> ❌ **The specified tag(s) were not found in the test files.**" >> $GITHUB_STEP_SUMMARY
+          echo ">" >> $GITHUB_STEP_SUMMARY
+          echo "> No tests were executed." >> $GITHUB_STEP_SUMMARY
+
       - name: Test Summary
-        if: always()
+        if: always() && steps.validate-tags.outcome != 'failure'
         run: |
           SANITIZED_BRANCH="${{ steps.sanitize.outputs.branch }}"
           BASE_URL="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/${{ inputs.deploy_dir }}"
