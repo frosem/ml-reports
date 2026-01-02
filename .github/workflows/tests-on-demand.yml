@@ -1,0 +1,30 @@
+name: Tests on Demand
+
+on:
+  workflow_dispatch:
+    inputs:
+      framework:
+        description: 'Test framework'
+        required: true
+        default: 'playwright'
+        type: choice
+        options:
+          - playwright
+          - cypress
+      tags:
+        description: 'Tags to filter tests. Examples: smoke | regression,critical | high,cart,checkout'
+        required: true
+        type: string
+        default: 'smoke'
+
+permissions:
+  contents: write
+
+jobs:
+  tests-on-demand:
+    uses: ./.github/workflows/shared-e2e.yml
+    with:
+      framework: ${{ inputs.framework }}
+      tags: ${{ inputs.tags }}
+      deploy_dir: on-demand
+      show_permanent_link: false
