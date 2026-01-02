@@ -86,11 +86,13 @@ jobs:
       - name: Run modified Cypress specs
         if: steps.changed-specs.outputs.has_cypress == 'true'
         run: |
+          echo "🧪 Running Cypress specs: ${{ steps.changed-specs.outputs.cypress_specs }}"
           npm run cypress:install
-          npx cypress run --browser chrome --spec "${{ steps.changed-specs.outputs.cypress_specs }}"
+          npx cypress run --browser chrome --spec "${{ steps.changed-specs.outputs.cypress_specs }}" --env grepFilterSpecs=false
 
       - name: Run modified Playwright specs
         if: steps.changed-specs.outputs.has_playwright == 'true'
         run: |
+          echo "🧪 Running Playwright specs: ${{ steps.changed-specs.outputs.playwright_specs }}"
           npm run playwright:install
           npx playwright test ${{ steps.changed-specs.outputs.playwright_specs }}
