@@ -89,7 +89,7 @@ jobs:
         run: |
           FRAMEWORK="${{ inputs.framework }}"
           TAGS="${{ inputs.tags }}"
-          
+
           # Set test directory and tag pattern based on framework
           if [ "$FRAMEWORK" == "playwright" ]; then
             TEST_DIR="playwright/tests"
@@ -98,11 +98,11 @@ jobs:
             TEST_DIR="cypress/e2e"
             TAG_PATTERN="tags:\s*\["
           fi
-          
+
           # Get all available tags from test files (only from tag definitions)
           AVAILABLE_TAGS=$(grep -rhE "$TAG_PATTERN" "$TEST_DIR" | grep -oE "'@[a-zA-Z]+'" | tr -d "'" | sort -u | tr '\n' ' ')
           echo "Available tags for $FRAMEWORK: $AVAILABLE_TAGS"
-          
+
           # Check each input tag
           MISSING_TAGS=""
           IFS=',' read -ra TAG_ARRAY <<< "$TAGS"
@@ -112,7 +112,7 @@ jobs:
               MISSING_TAGS="$MISSING_TAGS $tag"
             fi
           done
-          
+
           # If any tags are missing, fail with helpful message
           if [ -n "$MISSING_TAGS" ]; then
             echo ""
@@ -123,7 +123,7 @@ jobs:
             echo ""
             exit 1
           fi
-          
+
           echo "✅ All tags validated successfully"
 
       - name: Install Playwright browsers
@@ -172,7 +172,7 @@ jobs:
           FRAMEWORK="${{ inputs.framework }}"
           DEPLOY_DIR="${{ inputs.deploy_dir }}"
           HISTORY_DIR="gh-pages/${DEPLOY_DIR}/${SANITIZED_BRANCH}/${FRAMEWORK}"
-          
+
           if [ -d "$HISTORY_DIR" ]; then
             # For on-demand, get history from latest run directory
             if [ "$DEPLOY_DIR" == "on-demand" ]; then
