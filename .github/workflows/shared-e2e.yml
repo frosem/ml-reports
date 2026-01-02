@@ -100,7 +100,7 @@ jobs:
           fi
 
           # Get all available tags from test files (only from tag definitions)
-          AVAILABLE_TAGS=$(grep -rhE "$TAG_PATTERN" "$TEST_DIR" | grep -oE "'@[a-zA-Z]+'" | tr -d "'" | sort -u | tr '\n' ' ')
+          AVAILABLE_TAGS=$(grep -rhE "$TAG_PATTERN" "$TEST_DIR" | grep -oE "'@[a-zA-Z0-9_-]+'" | tr -d "'" | sort -u | tr '\n' ' ')
           echo "Available tags for $FRAMEWORK: $AVAILABLE_TAGS"
 
           # Check each input tag
@@ -126,9 +126,17 @@ jobs:
 
           echo "✅ All tags validated successfully"
 
-      - name: Install Playwright browsers
+      - name: Install and verify Playwright
         if: ${{ inputs.framework == 'playwright' }}
-        run: npx playwright install --with-deps chromium
+        run: |
+          npm run playwright:install
+          npm run playwright:verify
+
+      - name: Install and verify Cypress
+        if: ${{ inputs.framework == 'cypress' }}
+        run: |
+          npm run cypress:install
+          npm run cypress:verify
 
       # Run tests - with or without tag filtering
       - name: Run Playwright tests

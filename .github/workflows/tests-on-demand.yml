@@ -12,10 +12,10 @@ on:
           - playwright
           - cypress
       tags:
-        description: 'Tags to filter tests. Examples: smoke | regression,critical | high,cart,checkout'
+        description: 'Tags to filter (comma-separated, use "all" to run everything). Examples: smoke | critical,high | high,cart,checkout'
         required: true
         type: string
-        default: 'smoke'
+        default: 'all'
 
 permissions:
   contents: write
