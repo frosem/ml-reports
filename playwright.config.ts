@@ -1,5 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 import { getAllureConfig, settings } from '@shared/config/allure.config';
+import allure from '@shared/fixtures/management/allure-metadata.json';
 import packageJson from './package.json';
 
 /**
@@ -72,7 +73,7 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
-      name: 'chromium',
+      name: allure.parentSuite,
       use: { ...devices['Desktop Chrome'] },
     },
 
