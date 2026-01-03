@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { platform, release, version } from 'node:os';
 import { join } from 'node:path';
 import { Status } from 'allure-js-commons';
+import allure from '@fixtures/management/allure-metadata.json';
 import integrations from '@fixtures/management/integrations.json';
 
 export interface AllureSettings {
@@ -34,6 +35,7 @@ export function getAllureConfig(framework: Framework) {
     environmentInfo: settings.includeEnvironmentInfo ? buildEnvironmentInfo(framework) : {},
     globalLabels: {
       layer: 'e2e',
+      parentSuite: allure.parentSuite,
     },
     links: {
       story: {
