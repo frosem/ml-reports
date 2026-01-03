@@ -198,12 +198,13 @@ jobs:
           TAGS="${{ inputs.tags }}"
           CURRENT="${{ matrix.shard }}"
           TOTAL="${{ needs.setup.outputs.shards }}"
+          PROJECT=$(jq -r '.parentSuite' shared/fixtures/management/allure-metadata.json)
 
           if [ -n "$TAGS" ] && [ "$TAGS" != "all" ]; then
             GREP_PATTERN=$(echo "$TAGS" | sed 's/,/|@/g' | sed 's/^/@/')
-            npx playwright test --project="chromium" --grep "$GREP_PATTERN" --shard=${CURRENT}/${TOTAL}
+            npx playwright test --project="$PROJECT" --grep "$GREP_PATTERN" --shard=${CURRENT}/${TOTAL}
           else
-            npx playwright test --project="chromium" --shard=${CURRENT}/${TOTAL}
+            npx playwright test --project="$PROJECT" --shard=${CURRENT}/${TOTAL}
           fi
 
       - name: Run Cypress tests
