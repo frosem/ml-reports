@@ -1,4 +1,4 @@
-name: Tests on Demand
+name: E2E Tests on Demand
 
 on:
   workflow_dispatch:
