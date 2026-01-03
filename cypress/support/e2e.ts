@@ -19,6 +19,8 @@ import 'allure-cypress';
 import './commands';
 import { configure } from '@testing-library/cypress';
 import { register as registerCypressGrep } from '@cypress/grep';
+import { enableAllureTagSync } from './AllureTools';
 
 configure({ testIdAttribute: 'data-test' });
 registerCypressGrep();
+enableAllureTagSync();
