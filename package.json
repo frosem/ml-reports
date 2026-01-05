@@ -13,6 +13,7 @@
     "allure:clean:old": "npm run allure -- clean:old",
     "allure:generate": "npm run allure -- generate",
     "allure:open": "npm run allure -- open",
+    "allure:run": "npm run allure -- run",
     "cypress:install": "cypress install",
     "cypress:verify": "cypress verify",
     "cypress:test": "cypress run --browser chrome --spec \"cypress/e2e/saucedemo/**/*.specs.ts\" --env allure=true",
@@ -38,6 +39,7 @@
     "allure-playwright": "^3.4.3",
     "cypress": "^14.5.4",
     "cypress-split": "^1.24.25",
+    "dotenv": "^17.2.3",
     "prettier": "^3.7.4",
     "tsx": "^4.19.2",
     "typescript": "^5.9.3"
