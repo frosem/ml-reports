@@ -253,7 +253,7 @@ jobs:
         continue-on-error: true
         with:
           pattern: allure-results-${{ inputs.framework }}-*
-          path: .
+          path: allure-results
           merge-multiple: true
 
       - name: Get previous Allure history
