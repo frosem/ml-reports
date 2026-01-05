@@ -26,21 +26,6 @@ export const settings: AllureSettings = {
   stepLogging: true,
 };
 
-export type Framework = 'cypress' | 'playwright';
-
-/**
- * Directory configuration for Allure results and reports.
- * All directory logic is handled by allure-cli.ts - these are used internally.
- */
-export const directories = {
-  history: 'history',
-  report: 'allure-report/suite',
-  results: 'allure-results/suite',
-  reportOnDemand: 'allure-report/on-demand',
-  resultsOnDemand: 'allure-results/on-demand',
-  retentionDays: 30,
-};
-
 /**
  * Common Allure reporter configuration shared between Cypress and Playwright.
  */
@@ -62,7 +47,7 @@ export function getAllureConfig(framework: Framework) {
         urlTemplate: integrations.links.qase,
       },
     },
-    resultsDir: process.env.ALLURE_RESULTS_DIR ?? `${directories.results}/${framework}`,
+    resultsDir: `allure-results/${framework}`,
   };
 }
 
@@ -139,7 +124,9 @@ export const categories = {
     // matcherHint.js:42-48 - "Expected substring:", "Received string:"
     wrongValueDisplayed: '.*expect\\(locator\\)\\.to.* failed.*|.*Expected substring:.*|.*Expected string:.*',
   },
-};
+} as const;
+
+export type Framework = keyof typeof categories;
 
 const frameworkPackages: Record<Framework, { allure: string; framework: string }> = {
   cypress: { allure: 'allure-cypress', framework: 'cypress' },

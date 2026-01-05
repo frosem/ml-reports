@@ -190,35 +190,46 @@ jobs:
           npm run cypress:install
           npm run cypress:verify
 
-      - name: Run tests
-        id: run-tests
+      - name: Run Playwright tests
+        id: playwright-tests
+        if: inputs.framework == 'playwright'
         continue-on-error: true
         run: |
-          FRAMEWORK="${{ inputs.framework }}"
           TAGS="${{ inputs.tags }}"
           CURRENT="${{ matrix.shard }}"
           TOTAL="${{ needs.setup.outputs.shards }}"
-
-          # Build allure-cli command
-          CMD="npm run allure -- run ${FRAMEWORK} --shard=${CURRENT}/${TOTAL}"
+          PROJECT=$(jq -r '.parentSuite' shared/fixtures/management/allure-metadata.json)
 
           if [ -n "$TAGS" ] && [ "$TAGS" != "all" ]; then
-            # Convert tags: smoke,medium -> @smoke,@medium
-            FORMATTED_TAGS=$(echo "$TAGS" | sed 's/,/,@/g' | sed 's/^/@/')
-            CMD="${CMD} --tags=${FORMATTED_TAGS}"
+            GREP_PATTERN=$(echo "$TAGS" | sed 's/,/|@/g' | sed 's/^/@/')
+            npx playwright test --project="$PROJECT" --grep "$GREP_PATTERN" --shard=${CURRENT}/${TOTAL}
+          else
+            npx playwright test --project="$PROJECT" --shard=${CURRENT}/${TOTAL}
           fi
 
-          echo "Running: $CMD"
-          eval $CMD
+      - name: Run Cypress tests
+        id: cypress-tests
+        if: inputs.framework == 'cypress'
+        continue-on-error: true
+        env:
+          SPLIT: ${{ needs.setup.outputs.shards }}
+          SPLIT_INDEX1: ${{ matrix.shard }}
+        run: |
+          TAGS="${{ inputs.tags }}"
+
+          if [ -n "$TAGS" ] && [ "$TAGS" != "all" ]; then
+            GREP_TAGS=$(echo "$TAGS" | sed 's/,/ @/g' | sed 's/^/@/')
+            npx cypress run --browser chrome --env grepTags="$GREP_TAGS"
+          else
+            npx cypress run --browser chrome
+          fi
 
       - name: Upload Allure Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: allure-results-${{ inputs.framework }}-${{ matrix.shard }}
-          path: |
-            allure-results/suite/${{ inputs.framework }}/
-            allure-results/on-demand/${{ inputs.framework }}/
+          path: allure-results/${{ inputs.framework }}/
           retention-days: 30
 
       - name: Upload Cypress artifacts
@@ -255,8 +266,23 @@ jobs:
         continue-on-error: true
         with:
           pattern: allure-results-${{ inputs.framework }}-*
-          path: .
-          merge-multiple: true
+          path: allure-results-parts/
+          merge-multiple: false
+
+      - name: Merge test results
+        if: steps.download.outcome == 'success'
+        run: |
+          FRAMEWORK="${{ inputs.framework }}"
+          mkdir -p "allure-results/${FRAMEWORK}"
+
+          for part_dir in allure-results-parts/allure-results-${FRAMEWORK}-*/; do
+            if [ -d "$part_dir" ]; then
+              cp -r "$part_dir"* "allure-results/${FRAMEWORK}/" 2>/dev/null || true
+              echo "Merged: $part_dir"
+            fi
+          done
+
+          echo "Total result files: $(ls allure-results/${FRAMEWORK}/*.json 2>/dev/null | wc -l)"
 
       - name: Get previous Allure history
         if: steps.download.outcome == 'success'
@@ -271,29 +297,21 @@ jobs:
         run: |
           SANITIZED_BRANCH=$(echo "${{ env.BRANCH_NAME }}" | sed 's/\//-/g')
           FRAMEWORK="${{ inputs.framework }}"
-          TAGS="${{ inputs.tags }}"
           DEPLOY_DIR="${{ inputs.deploy_dir }}"
           HISTORY_DIR="gh-pages/${DEPLOY_DIR}/${SANITIZED_BRANCH}/${FRAMEWORK}"
-
-          # Determine results dir: tags → on-demand, no tags → suite
-          if [ -n "$TAGS" ] && [ "$TAGS" != "all" ]; then
-            RESULTS_DIR="allure-results/on-demand/${FRAMEWORK}"
-          else
-            RESULTS_DIR="allure-results/suite/${FRAMEWORK}"
-          fi
 
           if [ -d "$HISTORY_DIR" ]; then
             if [ "$DEPLOY_DIR" == "on-demand" ]; then
               LATEST_RUN=$(find "$HISTORY_DIR" -maxdepth 1 -type d -name '[0-9]*' | sort -n | tail -1)
               if [ -n "$LATEST_RUN" ] && [ -d "$LATEST_RUN/history" ]; then
-                mkdir -p "${RESULTS_DIR}/history"
-                cp -r "$LATEST_RUN/history"/* "${RESULTS_DIR}/history/" 2>/dev/null || true
+                mkdir -p "allure-results/${FRAMEWORK}/history"
+                cp -r "$LATEST_RUN/history"/* "allure-results/${FRAMEWORK}/history/" 2>/dev/null || true
                 echo "Copied history from: $LATEST_RUN"
               fi
             else
               if [ -d "$HISTORY_DIR/history" ]; then
-                mkdir -p "${RESULTS_DIR}/history"
-                cp -r "$HISTORY_DIR/history"/* "${RESULTS_DIR}/history/" 2>/dev/null || true
+                mkdir -p "allure-results/${FRAMEWORK}/history"
+                cp -r "$HISTORY_DIR/history"/* "allure-results/${FRAMEWORK}/history/" 2>/dev/null || true
                 echo "Copied ${FRAMEWORK} history from previous report"
               else
                 echo "No previous ${FRAMEWORK} history found"
@@ -303,32 +321,21 @@ jobs:
 
       - name: Generate Allure Report
         if: steps.download.outcome == 'success'
-        run: |
-          TAGS="${{ inputs.tags }}"
-
-          if [ -n "$TAGS" ] && [ "$TAGS" != "all" ]; then
-            npm run allure -- generate ${{ inputs.framework }} --tags="${TAGS}"
-          else
-            npm run allure -- generate ${{ inputs.framework }}
-          fi
+        run: npm run allure:generate -- ${{ inputs.framework }}
 
       - name: Upload Allure Report
         if: steps.download.outcome == 'success'
         uses: actions/upload-artifact@v4
         with:
           name: allure-report-${{ inputs.framework }}
-          # Upload from both possible locations (only one will have content)
-          path: |
-            allure-report/suite/${{ inputs.framework }}/
-            allure-report/on-demand/${{ inputs.framework }}/
+          path: allure-report/${{ inputs.framework }}/
           retention-days: 30
 
       - name: Create bug reports in Jira
         id: jira
         if: steps.download.outcome == 'success' && needs.test.result == 'failure' && inputs.create_bug_reports == true
         env:
-          # Determine results dir: tags → on-demand, no tags → suite
-          ALLURE_RESULTS_DIR: ${{ inputs.tags != '' && inputs.tags != 'all' && format('./allure-results/on-demand/{0}', inputs.framework) || format('./allure-results/suite/{0}', inputs.framework) }}
+          ALLURE_RESULTS_DIR: ./allure-results/${{ inputs.framework }}
           GITHUB_BRANCH: ${{ github.ref_name }}
           GITHUB_COMMIT_SHA: ${{ github.sha }}
           GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
@@ -353,25 +360,17 @@ jobs:
           SANITIZED_BRANCH="${{ steps.sanitize.outputs.branch }}"
           FRAMEWORK="${{ inputs.framework }}"
           RUN_ID="${{ env.RUN_ID }}"
-          TAGS="${{ inputs.tags }}"
           DEPLOY_DIR="${{ inputs.deploy_dir }}"
           ROOT_PATH="gh-pages/${DEPLOY_DIR}/${SANITIZED_BRANCH}/${FRAMEWORK}"
-
-          # Determine report dir: tags → on-demand, no tags → suite
-          if [ -n "$TAGS" ] && [ "$TAGS" != "all" ]; then
-            REPORT_DIR="allure-report/on-demand/${FRAMEWORK}"
-          else
-            REPORT_DIR="allure-report/suite/${FRAMEWORK}"
-          fi
 
           mkdir -p deploy-package
 
           mkdir -p "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/${RUN_ID}"
-          cp -r "${REPORT_DIR}"/* "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/${RUN_ID}/"
+          cp -r "allure-report/${FRAMEWORK}"/* "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/${RUN_ID}/"
           echo "✅ Report deployed to: ${SANITIZED_BRANCH}/${FRAMEWORK}/${RUN_ID}"
 
           if [ "${{ inputs.show_permanent_link }}" == "true" ]; then
-            cp -r "${REPORT_DIR}"/* "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/"
+            cp -r "allure-report/${FRAMEWORK}"/* "deploy-package/${SANITIZED_BRANCH}/${FRAMEWORK}/"
             echo "✅ Root path updated with latest report"
           fi
 
@@ -433,6 +432,7 @@ jobs:
           if [ -n "$TAGS" ] && [ "$TAGS" != "all" ]; then
             echo "| **Tags** | \`${TAGS}\` |" >> $GITHUB_STEP_SUMMARY
           fi
+          echo "| **Parallel Runners** | \`${{ needs.setup.outputs.shards }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| **Branch** | \`${{ env.BRANCH_NAME }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 

@@ -98,20 +98,12 @@ npx playwright test --grep "(?=.*@critical)(?=.*@high)" # Tests with both tags
 
 ```
 allure-results/
-├── suite/                    # Full test suite runs (no tags)
-│   ├── cypress/
-│   └── playwright/
-└── on-demand/                # Filtered runs (with --tags)
-    ├── cypress/
-    └── playwright/
+├── cypress/                  # Cypress test results
+└── playwright/               # Playwright test results
 
 allure-report/
-├── suite/
-│   ├── cypress/
-│   └── playwright/
-└── on-demand/
-    ├── cypress/
-    └── playwright/
+├── cypress/                  # Generated Cypress report
+└── playwright/               # Generated Playwright report
 ```
 
 ### Allure CLI Commands
@@ -120,23 +112,11 @@ Manage reports via the `allure-cli.ts` script:
 
 | Command | Description |
 |---------|-------------|
-| `npm run allure -- run <framework>` | Run tests with sharding, generate report, open in browser |
-| `npm run allure -- run <framework> --tags=@smoke` | Run only tests matching tags |
-| `npm run allure -- run <framework> --shards=2` | Override number of parallel shards |
 | `npm run allure -- clean` | Remove all results and reports |
 | `npm run allure -- clean <framework>` | Remove results and reports for specified framework |
 | `npm run allure -- clean:old` | Remove results older than 30 days |
-| `npm run allure -- generate <framework>` | Generate report from existing results |
-| `npm run allure -- history <framework>` | Copy history from previous report to results |
+| `npm run allure -- generate <framework>` | Generate report with history |
 | `npm run allure -- open <framework>` | Open the generated report |
-
-**Examples:**
-
-```bash
-npm run allure -- run playwright --tags=@smoke,@critical
-npm run allure -- run cypress --tags=@auth --shards=2
-npm run allure -- run playwright                          # Full suite, default shards from config in package.json
-```
 
 ### Report Features
 
@@ -288,12 +268,11 @@ ml-allure-reports/
 | `npm run <framework>:install` | Install framework dependencies |
 | `npm run <framework>:test` | Run framework tests |
 | `npm run <framework>:verify` | Verify framework installation |
-| `npm run allure -- run <framework>` | Run tests with sharding and generate report |
-| `npm run allure -- clean` | Remove all results and reports |
-| `npm run allure -- clean:old` | Remove results older than 30 days |
-| `npm run allure -- generate <framework>` | Generate HTML report from results |
-| `npm run allure -- history <framework>` | Copy history from previous report |
-| `npm run allure -- open <framework>` | Open the generated report |
+| `npm run allure` | Allure CLI entry point |
+| `npm run allure:clean` | Remove all results and reports |
+| `npm run allure:clean:old` | Remove results older than 30 days |
+| `npm run allure:generate` | Generate HTML report from results |
+| `npm run allure:open` | Open the generated report |
 | `npm run jira:create-bugs` | Create Jira issues from failures |
 | `npm run jira:dry-run` | Preview Jira integration (no creation) |
 | `npm run prettier:fix` | Format code with Prettier |
