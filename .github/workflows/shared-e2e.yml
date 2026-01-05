@@ -216,9 +216,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: allure-results-${{ inputs.framework }}-${{ matrix.shard }}
-          path: |
-            allure-results/suite/${{ inputs.framework }}/
-            allure-results/on-demand/${{ inputs.framework }}/
+          path: allure-results/
           retention-days: 30
 
       - name: Upload Cypress artifacts
@@ -317,10 +315,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: allure-report-${{ inputs.framework }}
-          # Upload from both possible locations (only one will have content)
-          path: |
-            allure-report/suite/${{ inputs.framework }}/
-            allure-report/on-demand/${{ inputs.framework }}/
+          path: allure-report/
           retention-days: 30
 
       - name: Create bug reports in Jira
