@@ -281,11 +281,13 @@ jobs:
           fi
 
           mkdir -p "$TARGET_DIR"
-          mv allure-results/*.json allure-results/*.txt "$TARGET_DIR/" 2>/dev/null || true
+          # Move ALL files (json, txt, attachments like png, webm, zip, etc.)
+          find allure-results -maxdepth 1 -type f -exec mv {} "$TARGET_DIR/" \;
           mv allure-results/history "$TARGET_DIR/" 2>/dev/null || true
 
           echo "=== Results moved to $TARGET_DIR ==="
-          find "$TARGET_DIR" -name '*-result.json' | wc -l
+          echo "Result files: $(find "$TARGET_DIR" -name '*-result.json' | wc -l)"
+          echo "Attachments: $(find "$TARGET_DIR" -name '*-attachment.*' | wc -l)"
 
       # Cypress: Download allure results directly (no blob reporter)
       - name: Download Cypress results
