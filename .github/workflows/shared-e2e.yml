@@ -211,11 +211,19 @@ jobs:
           echo "Running: $CMD"
           eval $CMD
 
-      - name: Upload Allure Results
-        if: always()
+      - name: Upload blob report
+        if: inputs.framework == 'playwright' && always()
         uses: actions/upload-artifact@v4
         with:
-          name: allure-results-${{ inputs.framework }}-${{ matrix.shard }}
+          name: blob-report-${{ matrix.shard }}
+          path: blob-report/
+          retention-days: 1
+
+      - name: Upload Allure Results
+        if: inputs.framework == 'cypress' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-cypress-${{ matrix.shard }}
           path: allure-results/
           retention-days: 30
 
@@ -243,18 +251,61 @@ jobs:
         with:
           node-version: ${{ needs.setup.outputs.node-version }}
           cache: 'npm'
-
       - name: Install dependencies
         run: npm ci
 
-      - name: Download all test results
-        id: download
+      # Playwright: Download blob reports and merge with allure-playwright
+      - name: Download Playwright blob reports
+        id: download-playwright
+        if: inputs.framework == 'playwright'
         uses: actions/download-artifact@v4
         continue-on-error: true
         with:
-          pattern: allure-results-${{ inputs.framework }}-*
+          pattern: blob-report-*
+          path: all-blob-reports
+          merge-multiple: true
+
+      - name: Merge Playwright reports
+        if: inputs.framework == 'playwright' && steps.download-playwright.outcome == 'success'
+        run: |
+          echo "=== Merging blob reports ==="
+          ls -la all-blob-reports/
+          npx playwright merge-reports --reporter allure-playwright ./all-blob-reports
+
+          # Move results to correct nested directory
+          TAGS="${{ inputs.tags }}"
+          if [ -n "$TAGS" ] && [ "$TAGS" != "all" ]; then
+            TARGET_DIR="allure-results/on-demand/playwright"
+          else
+            TARGET_DIR="allure-results/suite/playwright"
+          fi
+
+          mkdir -p "$TARGET_DIR"
+          mv allure-results/*.json allure-results/*.txt "$TARGET_DIR/" 2>/dev/null || true
+          mv allure-results/history "$TARGET_DIR/" 2>/dev/null || true
+
+          echo "=== Results moved to $TARGET_DIR ==="
+          find "$TARGET_DIR" -name '*-result.json' | wc -l
+
+      # Cypress: Download allure results directly (no blob reporter)
+      - name: Download Cypress results
+        id: download-cypress
+        if: inputs.framework == 'cypress'
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: allure-results-cypress-*
           path: allure-results
           merge-multiple: true
+
+      - name: Set download outcome
+        id: download
+        run: |
+          if [ "${{ inputs.framework }}" == "playwright" ]; then
+            echo "outcome=${{ steps.download-playwright.outcome }}" >> $GITHUB_OUTPUT
+          else
+            echo "outcome=${{ steps.download-cypress.outcome }}" >> $GITHUB_OUTPUT
+          fi
 
       - name: Get previous Allure history
         if: steps.download.outcome == 'success'

@@ -32,23 +32,27 @@ export default defineConfig({
    *
    * Third-party reporters (install via npm):
    * - 'allure-playwright' : Rich interactive reports with history, trends, and detailed steps
+   *
+   * Reporter configuration:
+   * - CI with sharding: Use 'blob' reporter, then merge with allure-playwright
+   * - Local/CI without sharding: Use allure-playwright directly
    */
-  reporter: [
-    ['list'], // Terminal output during test runs
-    // ['dot'], // Minimal dots output (. for pass, F for fail)
-    // ['line'], // Single updating line per test
-    // ['html', { open: 'never', outputFolder: 'playwright-report' }], // Interactive HTML report
-    // ['json', { outputFile: 'test-results.json' }], // JSON for CI/programmatic use
-    // ['junit', { outputFile: 'test-results.xml' }], // JUnit XML for Jenkins/CI
-    [
-      'allure-playwright',
-      {
-        ...getAllureConfig('playwright'),
-        detail: true, /* If true, add detailed information about each step to the report (API calls, hooks, expect assertions). */
-        suiteTitle: false, /* If true, implicitly add each test into a test suite named after its file name. */
-      },
-    ],
-  ],
+  reporter: process.env.CI
+    ? [
+        ['list'],
+        ['blob', { outputDir: 'blob-report' }], // CI: blob for proper shard merging
+      ]
+    : [
+        ['list'],
+        [
+          'allure-playwright',
+          {
+            ...getAllureConfig('playwright'),
+            detail: true, /* If true, add detailed information about each step to the report (API calls, hooks, expect assertions). */
+            suiteTitle: false, /* If true, implicitly add each test into a test suite named after its file name. */
+          },
+        ],
+      ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
